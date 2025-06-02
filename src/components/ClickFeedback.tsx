@@ -99,7 +99,7 @@ const ClickFeedback = () => {
     // Website URL - repositioned to avoid overlap
     ctx.fillStyle = '#3b82f6'; // blue-500
     ctx.font = '18px Inter, sans-serif';
-    ctx.fillText('theclickgame.com', width / 2, height - 20);
+    ctx.fillText('theclickgame.com', width / 2, height - 30); // Moved up to avoid overlap
     
     // Convert to data URL
     const dataUrl = canvas.toDataURL('image/png');
@@ -130,39 +130,23 @@ const ClickFeedback = () => {
       const blob = await res.blob();
       const file = new File([blob], 'the-click-result.png', { type: 'image/png' });
       
-      // Prepare share data
+      // Prepare share data - start with just text and URL
       const shareData: any = {
         title: 'The Click - Daily Pixel Challenge',
         text: generateShareText(),
+        url: 'https://theclickgame.com'
       };
       
-      // Check if browser can share files and add file if supported
-      let canShareWithFile = false;
-      if (navigator.canShare) {
-        const dataWithFile = {
-          ...shareData,
-          files: [file]
-        };
-        
-        canShareWithFile = navigator.canShare(dataWithFile);
-        if (canShareWithFile) {
-          shareData.files = [file];
-        } else {
-          // If can't share with file, try without file
-          shareData.url = 'https://theclickgame.com';
-        }
-      } else {
-        // If canShare API not supported, just add URL
-        shareData.url = 'https://theclickgame.com';
+      // Check if we can include files in the share
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        shareData.files = [file];
+        delete shareData.url; // Remove URL to prioritize file sharing
       }
 
-      // Only try to share if the browser indicates it can share this specific data
-      if (navigator.share && (
-        (shareData.files && navigator.canShare(shareData)) || 
-        (!shareData.files && navigator.canShare && navigator.canShare(shareData))
-      )) {
+      // Check if the browser can share our data (text + URL or text + files)
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
         await navigator.share(shareData);
-        console.log('Shared successfully');
+        setShowShareModal(false); // Close on successful share
       } else {
         // Fall back to platform options if sharing API is not available or data can't be shared
         setShowPlatformOptions(true);
@@ -178,25 +162,29 @@ const ClickFeedback = () => {
   const shareToTwitter = () => {
     const text = encodeURIComponent(generateShareText());
     window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
-    setShowPlatformOptions(false);
+    setShowShareModal(false);
   };
 
   const shareToFacebook = () => {
+    // Facebook has limitations on URL parameters, so we use their sharer endpoint
+    // which accepts just a URL
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://theclickgame.com')}`, '_blank');
-    setShowPlatformOptions(false);
+    setShowShareModal(false);
   };
 
   const shareToLinkedIn = () => {
-    const text = encodeURIComponent(generateShareText());
-    window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent('https://theclickgame.com')}&title=${encodeURIComponent('The Click - Daily Pixel Challenge')}&summary=${text}`, '_blank');
-    setShowPlatformOptions(false);
+    // LinkedIn sharing
+    const url = encodeURIComponent('https://theclickgame.com');
+    const title = encodeURIComponent('The Click - Daily Pixel Challenge');
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
+    setShowShareModal(false);
   };
 
   const shareViaEmail = () => {
     const subject = encodeURIComponent('The Click - Daily Pixel Challenge');
     const body = encodeURIComponent(generateShareText());
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-    setShowPlatformOptions(false);
+    setShowShareModal(false);
   };
 
   const shareToDiscord = () => {
@@ -210,7 +198,7 @@ const ClickFeedback = () => {
       link.click();
       document.body.removeChild(link);
     }
-    setShowPlatformOptions(false);
+    setShowShareModal(false);
   };
 
   const shareToSlack = () => {
@@ -224,7 +212,7 @@ const ClickFeedback = () => {
       link.click();
       document.body.removeChild(link);
     }
-    setShowPlatformOptions(false);
+    setShowShareModal(false);
   };
   
   // Determine feedback message based on distance
@@ -251,22 +239,7 @@ const ClickFeedback = () => {
     colorClass = 'text-gray-400';
   }
 
-  const copyToClipboard = () => {
-    if (shareImage) {
-      // For clipboard we'll download the image
-      const link = document.createElement('a');
-      link.href = shareImage;
-      link.download = `the-click-day-${dayNumber}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    }
-    setShowShareModal(false);
-  };
-
-  // Save the result to the device
+  // Save the result image
   const saveImage = () => {
     if (shareImage) {
       const link = document.createElement('a');
@@ -275,6 +248,8 @@ const ClickFeedback = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
     }
   };
 
@@ -310,6 +285,7 @@ const ClickFeedback = () => {
                 onClick={() => {
                   setShowShareModal(false);
                   setShowPlatformOptions(false);
+                  setShareImage(null); // Clear image when closing
                 }}
                 className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-slate-700"
                 aria-label="Close sharing dialog"
