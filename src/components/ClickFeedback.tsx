@@ -40,7 +40,7 @@ const ClickFeedback = () => {
       let row = '│';
       for (let x = 0; x < boxWidth; x++) {
         if (x === normalizedX && y === normalizedY) {
-          row += 'x'; // Using lowercase x as requested
+          row += 'X'; // Using uppercase X as requested
         } else {
           row += ' ';
         }
@@ -51,9 +51,10 @@ const ClickFeedback = () => {
     
     boxRows.push(`└─────────────┘`); // Bottom border with box-drawing characters
     
-    return `Pot: $${formattedJackpot}
+    return `The Click: Day ${dayNumber}
 ${boxRows.join('\n')}
-Day ${dayNumber} · Off by: ${formattedDistance}px
+ Distance: ${formattedDistance}px
+Jackpot: $${formattedJackpot} 
 theclickgame.com`;
   };
   
