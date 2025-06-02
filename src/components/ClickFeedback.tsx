@@ -15,7 +15,7 @@ const ClickFeedback = () => {
   const { distance } = lastClick;
   const formattedDistance = Math.round(distance);
   
-  // Generate share text with fixed-width characters to ensure consistent rendering
+  // Generate share text that renders consistently across platforms
   const generateShareText = () => {
     // Format jackpot with commas and 2 decimal places
     const formattedJackpot = jackpot.toLocaleString('en-US', {
@@ -23,38 +23,36 @@ const ClickFeedback = () => {
       maximumFractionDigits: 2
     });
     
-    // Create a simplified box with consistent characters
-    // Using plus signs and dashes for the top/bottom
-    // Using pipe characters for sides
-    const boxWidth = 11; // Reduced width for more consistent rendering
-    const boxHeight = 5;
+    // Create a box that uses simple characters that render consistently
+    const normalizedX = Math.min(Math.max(Math.floor((lastClick.x / 1000) * 9), 0), 9);
+    const normalizedY = Math.min(Math.max(Math.floor((lastClick.y / 1000) * 5), 0), 4);
     
-    // Normalize coordinates to fit within the box dimensions
-    const normalizedX = Math.min(Math.max(Math.floor((lastClick.x / 1000) * boxWidth), 0), boxWidth - 1);
-    const normalizedY = Math.min(Math.max(Math.floor((lastClick.y / 1000) * boxHeight), 0), boxHeight - 1);
+    // Build the box with consistent rows
+    let box = [];
     
-    // Create the rows of the box using only simple ASCII characters
-    let boxRows = [];
-    boxRows.push("+"+"-".repeat(boxWidth)+"+"); // Top border
+    // Top row
+    box.push("+-----------+");
     
-    for (let y = 0; y < boxHeight; y++) {
+    // Content rows
+    for (let y = 0; y < 5; y++) {
       let row = "|";
-      for (let x = 0; x < boxWidth; x++) {
-        if (x === normalizedX && y === normalizedY) {
-          row += "X"; // Position marker
+      for (let x = 0; x < 11; x++) {
+        if (x === normalizedX + 1 && y === normalizedY) { // +1 to account for the left border
+          row += "X";
         } else {
           row += " ";
         }
       }
       row += "|";
-      boxRows.push(row);
+      box.push(row);
     }
     
-    boxRows.push("+"+"-".repeat(boxWidth)+"+"); // Bottom border
+    // Bottom row
+    box.push("+-----------+");
     
-    // Construct final share text with fixed format
+    // Format the final output with exact spacing
     return `The Click: Day ${dayNumber}
-${boxRows.join('\n')}
+${box.join('\n')}
 Distance: ${formattedDistance}px
 Jackpot: $${formattedJackpot} 
 theclickgame.com`;
@@ -192,10 +190,6 @@ theclickgame.com`;
             
             <div className="bg-slate-700 p-4 rounded-lg mb-4 font-mono whitespace-pre overflow-x-auto text-sm">
               {generateShareText()}
-            </div>
-            
-            <div className="text-xs text-gray-400 mb-3">
-              Result will be copied in a simple text format for better compatibility
             </div>
             
             {!showPlatformOptions ? (
