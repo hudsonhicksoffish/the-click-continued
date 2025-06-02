@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useGameContext } from '../contexts/GameContext';
 import { Share2, Copy, X, Twitter, Facebook, Linkedin, Mail, MessageSquare } from 'lucide-react';
-import { formatDateKey } from '../utils/dateUtils';
 
 const ClickFeedback = () => {
   const { lastClick, hasClicked, dayNumber, jackpot } = useGameContext();
@@ -13,12 +12,14 @@ const ClickFeedback = () => {
 
   // Generate share text for fallback and clipboard
   const generateShareText = useCallback(() => {
+    if (!lastClick) return '';
+    
     const formattedJackpot = jackpot.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
     
-    return `The Click: Day ${dayNumber}\nDistance: ${lastClick ? Math.round(lastClick.distance) : '?'}px\nJackpot: $${formattedJackpot}\ntheclickgame.com`;
+    return `The Click: Day ${dayNumber}\nDistance: ${Math.round(lastClick.distance)}px\nJackpot: $${formattedJackpot}\ntheclickgame.com`;
   }, [lastClick, dayNumber, jackpot]);
   
   // Generate image for sharing
@@ -56,32 +57,10 @@ const ClickFeedback = () => {
     ctx.fillStyle = '#1e293b'; // slate-800
     ctx.fillRect(gridX, gridY, gridSize, gridSize);
     
-    // Grid border
+    // Grid border only - no internal grid lines
     ctx.strokeStyle = '#475569'; // slate-600
     ctx.lineWidth = 2;
     ctx.strokeRect(gridX, gridY, gridSize, gridSize);
-    
-    // Grid lines
-    ctx.strokeStyle = '#334155'; // slate-700
-    ctx.lineWidth = 1;
-    
-    // Vertical grid lines
-    for (let x = 1; x < 4; x++) {
-      const lineX = gridX + (gridSize * x) / 4;
-      ctx.beginPath();
-      ctx.moveTo(lineX, gridY);
-      ctx.lineTo(lineX, gridY + gridSize);
-      ctx.stroke();
-    }
-    
-    // Horizontal grid lines
-    for (let y = 1; y < 4; y++) {
-      const lineY = gridY + (gridSize * y) / 4;
-      ctx.beginPath();
-      ctx.moveTo(gridX, lineY);
-      ctx.lineTo(gridX + gridSize, lineY);
-      ctx.stroke();
-    }
     
     // Calculate normalized position within grid
     const normalizedX = Math.min(Math.max(lastClick.x / 1000, 0), 1);
@@ -117,10 +96,10 @@ const ClickFeedback = () => {
     ctx.fillText(`Distance: ${formattedDistance}px`, width / 2, gridY + gridSize + 40);
     ctx.fillText(`Jackpot: $${formattedJackpot}`, width / 2, gridY + gridSize + 70);
     
-    // Website URL
+    // Website URL - repositioned to avoid overlap
     ctx.fillStyle = '#3b82f6'; // blue-500
     ctx.font = '18px Inter, sans-serif';
-    ctx.fillText('theclickgame.com', width / 2, height - 30);
+    ctx.fillText('theclickgame.com', width / 2, height - 20);
     
     // Convert to data URL
     const dataUrl = canvas.toDataURL('image/png');

@@ -64,9 +64,6 @@ const Grid = ({ disabled = false }: GridProps) => {
         }`}
         onClick={handleClick}
       >
-        {/* Grid lines - subtle background pattern */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-        
         {/* Click marker */}
         {clickPosition && hasClicked && lastClick && (
           <div
