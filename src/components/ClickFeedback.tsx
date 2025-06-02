@@ -15,7 +15,7 @@ const ClickFeedback = () => {
   const { distance } = lastClick;
   const formattedDistance = Math.round(distance);
   
-  // Generate share text that renders consistently across platforms
+  // Generate share text with exact format specified
   const generateShareText = () => {
     // Format jackpot with commas and 2 decimal places
     const formattedJackpot = jackpot.toLocaleString('en-US', {
@@ -23,39 +23,38 @@ const ClickFeedback = () => {
       maximumFractionDigits: 2
     });
     
-    // Create a box that uses simple characters that render consistently
+    // Create a pixel position map for the box
     const normalizedX = Math.min(Math.max(Math.floor((lastClick.x / 1000) * 9), 0), 9);
-    const normalizedY = Math.min(Math.max(Math.floor((lastClick.y / 1000) * 5), 0), 4);
+    const normalizedY = Math.min(Math.max(Math.floor((lastClick.y / 1000) * 3), 0), 3);
     
-    // Build the box with consistent rows
-    let box = [];
+    // Build the exact format with fixed character counts
+    let shareText = `The Click: Day ${dayNumber}\n`;
     
-    // Top row
-    box.push("+-----------+");
+    // Line 1: Top border
+    shareText += `┌─────────┐\n`;
     
-    // Content rows
-    for (let y = 0; y < 5; y++) {
-      let row = "|";
-      for (let x = 0; x < 11; x++) {
-        if (x === normalizedX + 1 && y === normalizedY) { // +1 to account for the left border
-          row += "X";
+    // Line 2-5: Content rows with the X marker
+    for (let y = 0; y < 4; y++) {
+      shareText += `│`;
+      for (let x = 0; x < 9; x++) {
+        if (x === normalizedX && y === normalizedY) {
+          shareText += `X`;
         } else {
-          row += " ";
+          shareText += ` `;
         }
       }
-      row += "|";
-      box.push(row);
+      shareText += `│\n`;
     }
     
-    // Bottom row
-    box.push("+-----------+");
+    // Line 6: Bottom border
+    shareText += `└─────────┘\n`;
     
-    // Format the final output with exact spacing
-    return `The Click: Day ${dayNumber}
-${box.join('\n')}
-Distance: ${formattedDistance}px
-Jackpot: $${formattedJackpot} 
-theclickgame.com`;
+    // Additional information
+    shareText += `Distance: ${formattedDistance}px\n`;
+    shareText += `Jackpot: $${formattedJackpot} \n`;
+    shareText += `theclickgame.com`;
+    
+    return shareText;
   };
   
   // Web Share API handler
