@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useGameContext } from '../contexts/GameContext';
 import { Share2, Copy, X, Twitter, Facebook, Linkedin, Mail, MessageSquare } from 'lucide-react';
+import { formatDateKey } from '../utils/dateUtils';
 
 const ClickFeedback = () => {
   const { lastClick, hasClicked, dayNumber, jackpot } = useGameContext();
   const [showShareModal, setShowShareModal] = useState(false);
   const [showPlatformOptions, setShowPlatformOptions] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [shareImage, setShareImage] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   if (!hasClicked || !lastClick) {
     return null;
@@ -15,63 +18,157 @@ const ClickFeedback = () => {
   const { distance } = lastClick;
   const formattedDistance = Math.round(distance);
   
-  // Generate share text using a more platform-compatible format
+  // Generate share text for fallback and clipboard
   const generateShareText = () => {
-    // Format jackpot with commas and 2 decimal places
     const formattedJackpot = jackpot.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
     
-    // Calculate normalized position (0-8 for x, 0-3 for y)
-    const normalizedX = Math.min(Math.max(Math.floor((lastClick.x / 1000) * 9), 0), 8);
-    const normalizedY = Math.min(Math.max(Math.floor((lastClick.y / 1000) * 4), 0), 3);
+    return `The Click: Day ${dayNumber}\nDistance: ${formattedDistance}px\nJackpot: $${formattedJackpot}\ntheclickgame.com`;
+  };
+  
+  // Generate share image when modal opens
+  useEffect(() => {
+    if (showShareModal && canvasRef.current && !shareImage) {
+      generateShareImage();
+    }
+  }, [showShareModal]);
+  
+  // Generate image for sharing
+  const generateShareImage = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     
-    // Create plain ASCII representation that's more resilient
-    let result = `The Click: Day ${dayNumber}\n`;
-    result += "+-------------------+\n";
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     
-    for (let y = 0; y < 4; y++) {
-      result += "|";
-      for (let x = 0; x < 9; x++) {
-        if (x === normalizedX && y === normalizedY) {
-          result += " X ";
-        } else {
-          result += "   ";
-        }
-      }
-      result += "|\n";
+    // Canvas dimensions
+    const width = 500;
+    const height = 350;
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Background
+    ctx.fillStyle = '#0f172a'; // slate-900
+    ctx.fillRect(0, 0, width, height);
+    
+    // Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 24px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`The Click: Day ${dayNumber}`, width / 2, 40);
+    
+    // Draw grid
+    const gridSize = 200;
+    const gridX = (width - gridSize) / 2;
+    const gridY = 70;
+    
+    // Grid background
+    ctx.fillStyle = '#1e293b'; // slate-800
+    ctx.fillRect(gridX, gridY, gridSize, gridSize);
+    
+    // Grid border
+    ctx.strokeStyle = '#475569'; // slate-600
+    ctx.lineWidth = 2;
+    ctx.strokeRect(gridX, gridY, gridSize, gridSize);
+    
+    // Grid lines
+    ctx.strokeStyle = '#334155'; // slate-700
+    ctx.lineWidth = 1;
+    
+    // Vertical grid lines
+    for (let x = 1; x < 4; x++) {
+      const lineX = gridX + (gridSize * x) / 4;
+      ctx.beginPath();
+      ctx.moveTo(lineX, gridY);
+      ctx.lineTo(lineX, gridY + gridSize);
+      ctx.stroke();
     }
     
-    result += "+-------------------+\n";
-    result += `Distance: ${formattedDistance}px\n`;
-    result += `Jackpot: $${formattedJackpot}\n`;
-    result += `theclickgame.com`;
+    // Horizontal grid lines
+    for (let y = 1; y < 4; y++) {
+      const lineY = gridY + (gridSize * y) / 4;
+      ctx.beginPath();
+      ctx.moveTo(gridX, lineY);
+      ctx.lineTo(gridX + gridSize, lineY);
+      ctx.stroke();
+    }
     
-    return result;
+    // Calculate normalized position within grid
+    const normalizedX = Math.min(Math.max(lastClick.x / 1000, 0), 1);
+    const normalizedY = Math.min(Math.max(lastClick.y / 1000, 0), 1);
+    
+    // Draw user's click marker
+    const markerX = gridX + normalizedX * gridSize;
+    const markerY = gridY + normalizedY * gridSize;
+    
+    ctx.fillStyle = '#ef4444'; // red-500
+    ctx.beginPath();
+    ctx.arc(markerX, markerY, 8, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw X in marker
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('X', markerX, markerY);
+    
+    // Distance and jackpot info
+    const formattedJackpot = jackpot.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '20px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Distance: ${formattedDistance}px`, width / 2, gridY + gridSize + 40);
+    ctx.fillText(`Jackpot: $${formattedJackpot}`, width / 2, gridY + gridSize + 70);
+    
+    // Website URL
+    ctx.fillStyle = '#3b82f6'; // blue-500
+    ctx.font = '18px Inter, sans-serif';
+    ctx.fillText('theclickgame.com', width / 2, height - 30);
+    
+    // Convert to data URL
+    const dataUrl = canvas.toDataURL('image/png');
+    setShareImage(dataUrl);
   };
   
   // Web Share API handler
   const handleShare = async () => {
-    const shareText = generateShareText();
-    const shareData = {
-      title: 'The Click - Daily Pixel Challenge',
-      text: shareText,
-      url: 'https://theclickgame.com'
-    };
+    if (!shareImage) return;
+    
+    try {
+      // Convert data URL to blob for sharing
+      const res = await fetch(shareImage);
+      const blob = await res.blob();
+      const file = new File([blob], 'the-click-result.png', { type: 'image/png' });
+      
+      const shareData: any = {
+        title: 'The Click - Daily Pixel Challenge',
+        text: generateShareText(),
+      };
+      
+      // Add image file if supported by the browser
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        shareData.files = [file];
+      } else {
+        shareData.url = 'https://theclickgame.com';
+      }
 
-    // Check if Web Share API is supported
-    if (navigator.share && navigator.canShare(shareData)) {
-      try {
+      if (navigator.share) {
         await navigator.share(shareData);
         console.log('Shared successfully');
-      } catch (err) {
-        console.error('Error sharing:', err);
+      } else {
         // Fall back to platform options if sharing fails
         setShowPlatformOptions(true);
       }
-    } else {
-      // Show platform options for unsupported browsers
+    } catch (err) {
+      console.error('Error sharing:', err);
+      // Fall back to platform options if sharing fails
       setShowPlatformOptions(true);
     }
   };
@@ -102,18 +199,30 @@ const ClickFeedback = () => {
   };
 
   const shareToDiscord = () => {
-    // This just copies the text since Discord doesn't have a direct share API
-    navigator.clipboard.writeText(generateShareText());
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
+    // For Discord we'll download the image
+    if (shareImage) {
+      // Create a temporary anchor element
+      const link = document.createElement('a');
+      link.href = shareImage;
+      link.download = `the-click-day-${dayNumber}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
     setShowPlatformOptions(false);
   };
 
   const shareToSlack = () => {
-    // This just copies the text since Slack doesn't have a direct share API
-    navigator.clipboard.writeText(generateShareText());
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
+    // For Slack we'll download the image
+    if (shareImage) {
+      // Create a temporary anchor element
+      const link = document.createElement('a');
+      link.href = shareImage;
+      link.download = `the-click-day-${dayNumber}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
     setShowPlatformOptions(false);
   };
   
@@ -142,10 +251,30 @@ const ClickFeedback = () => {
   }
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(generateShareText());
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
+    if (shareImage) {
+      // For clipboard we'll download the image
+      const link = document.createElement('a');
+      link.href = shareImage;
+      link.download = `the-click-day-${dayNumber}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    }
     setShowShareModal(false);
+  };
+
+  // Save the result to the device
+  const saveImage = () => {
+    if (shareImage) {
+      const link = document.createElement('a');
+      link.href = shareImage;
+      link.download = `the-click-day-${dayNumber}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
@@ -164,6 +293,13 @@ const ClickFeedback = () => {
         Share Result
       </button>
       
+      {/* Hidden canvas for generating the share image */}
+      <canvas 
+        ref={canvasRef} 
+        className="hidden" 
+        aria-hidden="true"
+      />
+      
       {showShareModal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full">
@@ -181,12 +317,18 @@ const ClickFeedback = () => {
               </button>
             </div>
             
-            <div className="bg-slate-700 p-4 rounded-lg mb-4 font-mono whitespace-pre overflow-x-auto text-sm">
-              {generateShareText()}
-            </div>
+            {shareImage && (
+              <div className="mb-4 flex justify-center">
+                <img 
+                  src={shareImage} 
+                  alt="Your click result" 
+                  className="rounded-lg border border-slate-700 max-w-full h-auto"
+                />
+              </div>
+            )}
             
             {!showPlatformOptions ? (
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
                 <button 
                   onClick={handleShare}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
@@ -197,12 +339,12 @@ const ClickFeedback = () => {
                 </button>
                 
                 <button 
-                  onClick={copyToClipboard}
+                  onClick={saveImage}
                   className="flex-1 bg-slate-600 hover:bg-slate-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
-                  aria-label="Copy to clipboard"
+                  aria-label="Save image"
                 >
                   <Copy className="h-4 w-4 mr-2" />
-                  Copy
+                  Save Image
                 </button>
                 
                 <button 
@@ -274,14 +416,14 @@ const ClickFeedback = () => {
                 
                 <div className="flex gap-3">
                   <button 
-                    onClick={copyToClipboard}
+                    onClick={saveImage}
                     className={`flex-1 bg-slate-600 hover:bg-slate-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center ${
                       copySuccess ? 'bg-green-600' : ''
                     }`}
-                    aria-label="Copy to clipboard"
+                    aria-label="Save image"
                   >
                     <Copy className="h-4 w-4 mr-2" />
-                    {copySuccess ? 'Copied!' : 'Copy Text'}
+                    {copySuccess ? 'Saved!' : 'Save Image'}
                   </button>
                   
                   <button 
