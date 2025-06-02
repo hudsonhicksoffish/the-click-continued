@@ -39,7 +39,7 @@ const JackpotDisplay = () => {
       <div className="flex items-center justify-center">
         <h2 className="text-2xl font-bold text-white mb-1">TODAY'S JACKPOT</h2>
         {!isConnected && (
-          <div className="ml-2 flex items-center text-yellow-400" title="Reconnecting...">
+          <div className="ml-2 flex items-center text-yellow-400\" title="Reconnecting...">
             <Activity size={18} className="animate-pulse" />
           </div>
         )}
