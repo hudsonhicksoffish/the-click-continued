@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useGameContext } from '../contexts/GameContext';
 import { Share2, Copy, X, Twitter, Facebook, Linkedin, Mail, MessageSquare } from 'lucide-react';
 import { formatDateKey } from '../utils/dateUtils';
@@ -11,32 +11,20 @@ const ClickFeedback = () => {
   const [shareImage, setShareImage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  if (!hasClicked || !lastClick) {
-    return null;
-  }
-
-  const { distance } = lastClick;
-  const formattedDistance = Math.round(distance);
-  
   // Generate share text for fallback and clipboard
-  const generateShareText = () => {
+  const generateShareText = useCallback(() => {
     const formattedJackpot = jackpot.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
     
-    return `The Click: Day ${dayNumber}\nDistance: ${formattedDistance}px\nJackpot: $${formattedJackpot}\ntheclickgame.com`;
-  };
-  
-  // Generate share image when modal opens
-  useEffect(() => {
-    if (showShareModal && canvasRef.current && !shareImage) {
-      generateShareImage();
-    }
-  }, [showShareModal]);
+    return `The Click: Day ${dayNumber}\nDistance: ${lastClick ? Math.round(lastClick.distance) : '?'}px\nJackpot: $${formattedJackpot}\ntheclickgame.com`;
+  }, [lastClick, dayNumber, jackpot]);
   
   // Generate image for sharing
-  const generateShareImage = () => {
+  const generateShareImage = useCallback(() => {
+    if (!lastClick) return;
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -121,6 +109,8 @@ const ClickFeedback = () => {
       maximumFractionDigits: 2
     });
     
+    const formattedDistance = Math.round(lastClick.distance);
+    
     ctx.fillStyle = '#ffffff';
     ctx.font = '20px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -135,7 +125,21 @@ const ClickFeedback = () => {
     // Convert to data URL
     const dataUrl = canvas.toDataURL('image/png');
     setShareImage(dataUrl);
-  };
+  }, [lastClick, dayNumber, jackpot]);
+  
+  // Generate share image when modal opens
+  useEffect(() => {
+    if (showShareModal && canvasRef.current && !shareImage && lastClick) {
+      generateShareImage();
+    }
+  }, [showShareModal, shareImage, generateShareImage, lastClick]);
+
+  if (!hasClicked || !lastClick) {
+    return null;
+  }
+
+  const { distance } = lastClick;
+  const formattedDistance = Math.round(distance);
   
   // Web Share API handler
   const handleShare = async () => {
