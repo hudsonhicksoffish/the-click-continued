@@ -130,23 +130,41 @@ const ClickFeedback = () => {
       const blob = await res.blob();
       const file = new File([blob], 'the-click-result.png', { type: 'image/png' });
       
+      // Prepare share data
       const shareData: any = {
         title: 'The Click - Daily Pixel Challenge',
         text: generateShareText(),
       };
       
-      // Add image file if supported by the browser
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        shareData.files = [file];
+      // Check if browser can share files and add file if supported
+      let canShareWithFile = false;
+      if (navigator.canShare) {
+        const dataWithFile = {
+          ...shareData,
+          files: [file]
+        };
+        
+        canShareWithFile = navigator.canShare(dataWithFile);
+        if (canShareWithFile) {
+          shareData.files = [file];
+        } else {
+          // If can't share with file, try without file
+          shareData.url = 'https://theclickgame.com';
+        }
       } else {
+        // If canShare API not supported, just add URL
         shareData.url = 'https://theclickgame.com';
       }
 
-      if (navigator.share) {
+      // Only try to share if the browser indicates it can share this specific data
+      if (navigator.share && (
+        (shareData.files && navigator.canShare(shareData)) || 
+        (!shareData.files && navigator.canShare && navigator.canShare(shareData))
+      )) {
         await navigator.share(shareData);
         console.log('Shared successfully');
       } else {
-        // Fall back to platform options if sharing fails
+        // Fall back to platform options if sharing API is not available or data can't be shared
         setShowPlatformOptions(true);
       }
     } catch (err) {
