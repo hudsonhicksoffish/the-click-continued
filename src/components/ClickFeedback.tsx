@@ -15,7 +15,7 @@ const ClickFeedback = () => {
   const { distance } = lastClick;
   const formattedDistance = Math.round(distance);
   
-  // Generate share text with exact format specified
+  // Generate share text using a more platform-compatible format
   const generateShareText = () => {
     // Format jackpot with commas and 2 decimal places
     const formattedJackpot = jackpot.toLocaleString('en-US', {
@@ -23,38 +23,32 @@ const ClickFeedback = () => {
       maximumFractionDigits: 2
     });
     
-    // Create a pixel position map for the box
-    const normalizedX = Math.min(Math.max(Math.floor((lastClick.x / 1000) * 9), 0), 9);
-    const normalizedY = Math.min(Math.max(Math.floor((lastClick.y / 1000) * 3), 0), 3);
+    // Calculate normalized position (0-8 for x, 0-3 for y)
+    const normalizedX = Math.min(Math.max(Math.floor((lastClick.x / 1000) * 9), 0), 8);
+    const normalizedY = Math.min(Math.max(Math.floor((lastClick.y / 1000) * 4), 0), 3);
     
-    // Build the exact format with fixed character counts
-    let shareText = `The Click: Day ${dayNumber}\n`;
+    // Create plain ASCII representation that's more resilient
+    let result = `The Click: Day ${dayNumber}\n`;
+    result += "+-------------------+\n";
     
-    // Line 1: Top border
-    shareText += `┌─────────┐\n`;
-    
-    // Line 2-5: Content rows with the X marker
     for (let y = 0; y < 4; y++) {
-      shareText += `│`;
+      result += "|";
       for (let x = 0; x < 9; x++) {
         if (x === normalizedX && y === normalizedY) {
-          shareText += `X`;
+          result += " X ";
         } else {
-          shareText += ` `;
+          result += "   ";
         }
       }
-      shareText += `│\n`;
+      result += "|\n";
     }
     
-    // Line 6: Bottom border
-    shareText += `└─────────┘\n`;
+    result += "+-------------------+\n";
+    result += `Distance: ${formattedDistance}px\n`;
+    result += `Jackpot: $${formattedJackpot}\n`;
+    result += `theclickgame.com`;
     
-    // Additional information
-    shareText += `Distance: ${formattedDistance}px\n`;
-    shareText += `Jackpot: $${formattedJackpot} \n`;
-    shareText += `theclickgame.com`;
-    
-    return shareText;
+    return result;
   };
   
   // Web Share API handler
