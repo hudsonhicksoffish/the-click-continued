@@ -16,6 +16,10 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3001'
       }
-    }
+    },
+    port: 5173,
+    host: true,
+    strictPort: true,
+    open: true
   }
 });

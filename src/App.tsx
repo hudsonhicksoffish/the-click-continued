@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GameProvider } from './contexts/GameContext';
 import Header from './components/Header';
 import Grid from './components/Grid';
@@ -9,14 +9,14 @@ import { formatDateKey } from './utils/dateUtils';
 function App() {
   const [hasAttemptedToday, setHasAttemptedToday] = useState<boolean>(false);
 
-  useState(() => {
+  useEffect(() => {
     const todayKey = formatDateKey(new Date());
     const attemptData = localStorage.getItem(`click_attempt_${todayKey}`);
     
     if (attemptData) {
       setHasAttemptedToday(true);
     }
-  });
+  }, []);
 
   return (
     <GameProvider>

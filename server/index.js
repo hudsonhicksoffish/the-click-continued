@@ -157,6 +157,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Simple route to check if server is running
+app.get('/', (req, res) => {
+  res.send('The Click API Server is running');
+});
+
 // Start server
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
