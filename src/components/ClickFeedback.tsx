@@ -34,7 +34,7 @@ const ClickFeedback = () => {
     
     // Canvas dimensions
     const width = 500;
-    const height = 350;
+    const height = 400; // Made taller to accommodate spaced-out text
     canvas.width = width;
     canvas.height = height;
     
@@ -82,24 +82,24 @@ const ClickFeedback = () => {
     ctx.textBaseline = 'middle';
     ctx.fillText('X', markerX, markerY);
     
-    // Distance and jackpot info
-    const formattedJackpot = jackpot.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-    
+    // Distance info - moved up
     const formattedDistance = Math.round(lastClick.distance);
-    
     ctx.fillStyle = '#ffffff';
     ctx.font = '20px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(`Distance: ${formattedDistance}px`, width / 2, gridY + gridSize + 40);
-    ctx.fillText(`Jackpot: $${formattedJackpot}`, width / 2, gridY + gridSize + 70);
     
-    // Website URL - repositioned to avoid overlap
+    // Jackpot info - positioned with more space
+    const formattedJackpot = jackpot.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    ctx.fillText(`Jackpot: $${formattedJackpot}`, width / 2, gridY + gridSize + 80);
+    
+    // Website URL - much higher to prevent overlap
     ctx.fillStyle = '#3b82f6'; // blue-500
     ctx.font = '18px Inter, sans-serif';
-    ctx.fillText('theclickgame.com', width / 2, height - 30); // Moved up to avoid overlap
+    ctx.fillText('theclickgame.com', width / 2, height - 50); 
     
     // Convert to data URL
     const dataUrl = canvas.toDataURL('image/png');
@@ -111,6 +111,13 @@ const ClickFeedback = () => {
     if (showShareModal && canvasRef.current && !shareImage && lastClick) {
       generateShareImage();
     }
+
+    // Cleanup when modal closes
+    return () => {
+      if (!showShareModal) {
+        setShareImage(null);
+      }
+    };
   }, [showShareModal, shareImage, generateShareImage, lastClick]);
 
   if (!hasClicked || !lastClick) {
@@ -130,25 +137,26 @@ const ClickFeedback = () => {
       const blob = await res.blob();
       const file = new File([blob], 'the-click-result.png', { type: 'image/png' });
       
-      // Prepare share data - start with just text and URL
-      const shareData: any = {
-        title: 'The Click - Daily Pixel Challenge',
-        text: generateShareText(),
-        url: 'https://theclickgame.com'
-      };
-      
-      // Check if we can include files in the share
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        shareData.files = [file];
-        delete shareData.url; // Remove URL to prioritize file sharing
-      }
-
-      // Check if the browser can share our data (text + URL or text + files)
-      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-        await navigator.share(shareData);
-        setShowShareModal(false); // Close on successful share
+      if (navigator.share && 
+          navigator.canShare && 
+          navigator.canShare({ files: [file] })) {
+        // If Web Share API with files is supported
+        await navigator.share({
+          title: 'The Click - Daily Pixel Challenge',
+          text: generateShareText(),
+          files: [file]
+        });
+        setShowShareModal(false);
+      } else if (navigator.share) {
+        // Fallback to just sharing text if files aren't supported
+        await navigator.share({
+          title: 'The Click - Daily Pixel Challenge',
+          text: generateShareText(),
+          url: 'https://theclickgame.com'
+        });
+        setShowShareModal(false);
       } else {
-        // Fall back to platform options if sharing API is not available or data can't be shared
+        // If Web Share API is not available at all
         setShowPlatformOptions(true);
       }
     } catch (err) {
@@ -161,56 +169,61 @@ const ClickFeedback = () => {
   // Platform-specific share handlers
   const shareToTwitter = () => {
     const text = encodeURIComponent(generateShareText());
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank', 'noopener,noreferrer');
     setShowShareModal(false);
   };
 
   const shareToFacebook = () => {
-    // Facebook has limitations on URL parameters, so we use their sharer endpoint
-    // which accepts just a URL
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://theclickgame.com')}`, '_blank');
+    // Using simple Facebook sharer to avoid issues
+    window.open('https://www.facebook.com/sharer/sharer.php?u=' + 
+      encodeURIComponent('https://theclickgame.com'), 
+      '_blank', 'noopener,noreferrer');
     setShowShareModal(false);
   };
 
   const shareToLinkedIn = () => {
-    // LinkedIn sharing
-    const url = encodeURIComponent('https://theclickgame.com');
-    const title = encodeURIComponent('The Click - Daily Pixel Challenge');
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
+    window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + 
+      encodeURIComponent('https://theclickgame.com'), 
+      '_blank', 'noopener,noreferrer');
     setShowShareModal(false);
   };
 
   const shareViaEmail = () => {
     const subject = encodeURIComponent('The Click - Daily Pixel Challenge');
     const body = encodeURIComponent(generateShareText());
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank', 'noopener,noreferrer');
     setShowShareModal(false);
   };
 
-  const shareToDiscord = () => {
-    // For Discord we'll download the image
+  const downloadImage = () => {
     if (shareImage) {
-      // Create a temporary anchor element
       const link = document.createElement('a');
       link.href = shareImage;
       link.download = `the-click-day-${dayNumber}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      return true;
+    }
+    return false;
+  };
+
+  const shareToDiscord = () => {
+    // For Discord we'll download the image
+    if (downloadImage()) {
+      // Show success message
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
     }
     setShowShareModal(false);
   };
 
   const shareToSlack = () => {
     // For Slack we'll download the image
-    if (shareImage) {
-      // Create a temporary anchor element
-      const link = document.createElement('a');
-      link.href = shareImage;
-      link.download = `the-click-day-${dayNumber}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    if (downloadImage()) {
+      // Show success message
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
     }
     setShowShareModal(false);
   };
@@ -241,16 +254,16 @@ const ClickFeedback = () => {
 
   // Save the result image
   const saveImage = () => {
-    if (shareImage) {
-      const link = document.createElement('a');
-      link.href = shareImage;
-      link.download = `the-click-day-${dayNumber}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    if (downloadImage()) {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowShareModal(false);
+    setShowPlatformOptions(false);
+    setShareImage(null); // Clear image to ensure fresh generation next time
   };
 
   return (
@@ -282,11 +295,7 @@ const ClickFeedback = () => {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white">Share Your Result</h2>
               <button 
-                onClick={() => {
-                  setShowShareModal(false);
-                  setShowPlatformOptions(false);
-                  setShareImage(null); // Clear image when closing
-                }}
+                onClick={handleCloseModal}
                 className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-slate-700"
                 aria-label="Close sharing dialog"
               >
@@ -325,7 +334,7 @@ const ClickFeedback = () => {
                 </button>
                 
                 <button 
-                  onClick={() => setShowShareModal(false)}
+                  onClick={handleCloseModal}
                   className="bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-lg transition-colors"
                   aria-label="Close sharing dialog"
                 >
