@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { formatDateKey, getCurrentDayNumber } from '../utils/dateUtils';
+import { initSocket, registerIncorrectClick, registerCorrectClick } from '../services/socketService';
 
 interface Click {
   x: number;
@@ -10,6 +11,7 @@ interface Click {
 
 interface GameContextType {
   jackpot: number;
+  setJackpot: (value: number) => void;
   targetPixel: { x: number; y: number };
   lastClick: Click | null;
   hasClicked: boolean;
@@ -44,6 +46,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [lastClick, setLastClick] = useState<Click | null>(null);
   const [hasClicked, setHasClicked] = useState(false);
 
+  // Initialize WebSocket connection
+  useEffect(() => {
+    initSocket();
+  }, []);
+
   // Check if user has clicked today
   useEffect(() => {
     const todayKey = formatDateKey(new Date());
@@ -54,18 +61,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setLastClick(parsedData);
       setHasClicked(true);
     }
-    
-    // Simulate jackpot increasing over time
-    const jackpotInterval = setInterval(() => {
-      setJackpot(prev => {
-        // Increase by a small amount each interval
-        const newValue = prev + 0.01;
-        // Format to 2 decimal places
-        return Math.round(newValue * 100) / 100;
-      });
-    }, 30000); // Every 30 seconds
-    
-    return () => clearInterval(jackpotInterval);
   }, []);
 
   const registerClick = useCallback((x: number, y: number) => {
@@ -87,14 +82,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     // Check if we have a winner (direct hit)
     if (distance === 0) {
-      // Reset jackpot to $100 on a direct hit
-      setJackpot(100.00);
+      // Register the correct click via WebSocket
+      registerCorrectClick();
       console.log('JACKPOT WINNER!');
+    } else {
+      // Register the incorrect click via WebSocket
+      registerIncorrectClick();
     }
   }, [targetPixel]);
 
   const value = {
     jackpot,
+    setJackpot,
     targetPixel,
     lastClick,
     hasClicked,

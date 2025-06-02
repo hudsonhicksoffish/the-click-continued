@@ -7,4 +7,15 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  server: {
+    proxy: {
+      '/socket.io': {
+        target: 'http://localhost:3001',
+        ws: true
+      },
+      '/api': {
+        target: 'http://localhost:3001'
+      }
+    }
+  }
 });
