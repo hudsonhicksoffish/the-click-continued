@@ -9,7 +9,7 @@
 
   color-scheme: dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #0f172a;
+  background-color: #000000;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -22,4 +22,42 @@
     linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 50px 50px;
+}
+
+/* Digital display styles */
+.digit-container {
+  display: inline-block;
+  position: relative;
+  width: 50px;
+  height: 80px;
+  margin: 0 2px;
+  background-color: #333333;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.digit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Digital-7', monospace;
+  font-size: 60px;
+  color: #FFFFFF;
+}
+
+.separator {
+  display: inline-block;
+  margin: 0 2px;
+  font-size: 48px;
+  font-weight: bold;
+  color: #FFFFFF;
+}
+
+/* Pixel font styles */
+@font-face {
+  font-family: 'Digital-7';
+  src: url('https://fonts.cdnfonts.com/s/19367/digital-7.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
 }

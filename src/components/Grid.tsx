@@ -7,110 +7,236 @@ interface GridProps {
 
 const Grid = ({ disabled = false }: GridProps) => {
   const { registerClick, hasClicked, lastClick, revealedTargetPixel } = useGameContext();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
-  const gridRef = useRef<HTMLDivElement>(null);
-  const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
-  const [showTarget, setShowTarget] = useState(false);
-
+  
+  // Setup and resize canvas
   useEffect(() => {
-    const updateGridSize = () => {
-      if (gridRef.current) {
-        const { width, height } = gridRef.current.getBoundingClientRect();
-        setGridSize({ width, height });
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const updateCanvasSize = () => {
+      // Get container width
+      const parentWidth = canvas.parentElement?.clientWidth || 500;
+      // Make canvas square
+      const size = Math.min(parentWidth, 500);
+      
+      // Set displayed size (CSS)
+      canvas.style.width = `${size}px`;
+      canvas.style.height = `${size}px`;
+      
+      // Set actual canvas size (with higher resolution for better rendering)
+      const scale = window.devicePixelRatio || 1;
+      canvas.width = size * scale;
+      canvas.height = size * scale;
+      
+      // Store grid size for calculations
+      setGridSize({ width: size, height: size });
+      
+      // Scale the drawing context
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(scale, scale);
       }
+      
+      // Redraw canvas
+      drawCanvas();
     };
-
-    updateGridSize();
-    window.addEventListener('resize', updateGridSize);
-
+    
+    // Initial setup
+    updateCanvasSize();
+    
+    // Add resize listener
+    window.addEventListener('resize', updateCanvasSize);
+    
     return () => {
-      window.removeEventListener('resize', updateGridSize);
+      window.removeEventListener('resize', updateCanvasSize);
     };
   }, []);
-
+  
+  // Redraw canvas when game state changes
   useEffect(() => {
-    // Show target after click with a slight delay
-    if (hasClicked && lastClick && revealedTargetPixel) {
-      const timer = setTimeout(() => {
-        setShowTarget(true);
-      }, 1000);
-      return () => clearTimeout(timer);
+    drawCanvas();
+  }, [hasClicked, lastClick, revealedTargetPixel, disabled]);
+  
+  // Draw the canvas based on game state
+  const drawCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const displayWidth = gridSize.width;
+    const displayHeight = gridSize.height;
+    
+    // Clear canvas
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, displayWidth, displayHeight);
+    
+    // Draw border
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(1.5, 1.5, displayWidth - 3, displayHeight - 3);
+    
+    // If user has clicked, draw the post-click state
+    if (hasClicked && lastClick) {
+      // Draw user's click marker
+      const normalizedX = (lastClick.x / 1000) * displayWidth;
+      const normalizedY = (lastClick.y / 1000) * displayHeight;
+      
+      drawPixelatedX(ctx, normalizedX, normalizedY, '#FF0000');
+      
+      // Draw "SEE YOU TMRW" pixel art
+      drawSeeYouTomorrow(ctx, displayWidth, displayHeight);
     }
-  }, [hasClicked, lastClick, revealedTargetPixel]);
-
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    
+    // If target is revealed, draw target marker
+    if (revealedTargetPixel) {
+      const targetX = (revealedTargetPixel.x / 1000) * displayWidth;
+      const targetY = (revealedTargetPixel.y / 1000) * displayHeight;
+      
+      drawPixelatedX(ctx, targetX, targetY, '#FF0000');
+    }
+  };
+  
+  // Draw a pixelated 'X' marker
+  const drawPixelatedX = (
+    ctx: CanvasRenderingContext2D, 
+    x: number, 
+    y: number, 
+    color: string
+  ) => {
+    const pixelSize = 2;
+    ctx.fillStyle = color;
+    
+    // Draw a 5x5 pixel X
+    const pattern = [
+      [1, 0, 0, 0, 1],
+      [0, 1, 0, 1, 0],
+      [0, 0, 1, 0, 0],
+      [0, 1, 0, 1, 0],
+      [1, 0, 0, 0, 1]
+    ];
+    
+    const offsetX = x - (pattern[0].length * pixelSize) / 2;
+    const offsetY = y - (pattern.length * pixelSize) / 2;
+    
+    for (let py = 0; py < pattern.length; py++) {
+      for (let px = 0; px < pattern[py].length; px++) {
+        if (pattern[py][px] === 1) {
+          ctx.fillRect(
+            offsetX + px * pixelSize, 
+            offsetY + py * pixelSize, 
+            pixelSize, 
+            pixelSize
+          );
+        }
+      }
+    }
+  };
+  
+  // Draw "SEE YOU TMRW" pixel art
+  const drawSeeYouTomorrow = (
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number
+  ) => {
+    // Define pixel art for "SEE YOU TMRW" text
+    const pixelArt = [
+      [0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0],
+      [0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+      [0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+      [0,0,0,1,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,0],
+      [0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+      [0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+      [0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
+      [1,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
+      [0,1,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
+      [0,1,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
+      [0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
+      [0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
+      [0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,1,1,1,0,1,0],
+      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0],
+      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0],
+      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0],
+      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0],
+      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0],
+      [0,1,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,1,0]
+    ];
+    
+    const pixelSize = 4;
+    const artWidth = pixelArt[0].length * pixelSize;
+    const artHeight = pixelArt.length * pixelSize;
+    
+    // Calculate center position
+    const startX = (width - artWidth) / 2;
+    const startY = (height - artHeight) / 2;
+    
+    // Draw darker background for pixel art
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(
+      startX - pixelSize,
+      startY - pixelSize,
+      artWidth + pixelSize * 2,
+      artHeight + pixelSize * 2
+    );
+    
+    // Draw the pixel art
+    ctx.fillStyle = '#222222'; // Dark gray for the text
+    
+    for (let y = 0; y < pixelArt.length; y++) {
+      for (let x = 0; x < pixelArt[y].length; x++) {
+        if (pixelArt[y][x] === 1) {
+          // Randomly colorize some pixels red (X in SEE)
+          const isRedPixel = x === 6 && y >= 0 && y <= 6;
+          
+          ctx.fillStyle = isRedPixel ? '#FF0000' : '#222222';
+          
+          ctx.fillRect(
+            startX + x * pixelSize, 
+            startY + y * pixelSize, 
+            pixelSize, 
+            pixelSize
+          );
+        }
+      }
+    }
+  };
+  
+  const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (disabled || hasClicked) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = Math.floor(((e.clientX - rect.left) / rect.width) * 1000);
-    const y = Math.floor(((e.clientY - rect.top) / rect.height) * 1000);
     
-    // Record click position for animation
-    setClickPosition({ 
-      x: e.clientX - rect.left, 
-      y: e.clientY - rect.top 
-    });
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     
-    // Register click with the game context
-    registerClick(x, y);
+    const rect = canvas.getBoundingClientRect();
+    
+    // Get click position relative to canvas
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Convert to 0-1000 range
+    const gridX = Math.floor((x / rect.width) * 1000);
+    const gridY = Math.floor((y / rect.height) * 1000);
+    
+    // Register click
+    registerClick(gridX, gridY);
   };
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div 
-        ref={gridRef}
-        className={`relative aspect-square w-full border border-gray-700 bg-slate-800 rounded-lg overflow-hidden ${
+      <canvas 
+        ref={canvasRef}
+        onClick={handleClick}
+        className={`w-full aspect-square ${
           disabled ? 'opacity-75 cursor-not-allowed' : hasClicked ? 'cursor-default' : 'cursor-pointer'
         }`}
-        onClick={handleClick}
-      >
-        {/* Click marker */}
-        {clickPosition && hasClicked && lastClick && (
-          <div
-            className="absolute w-6 h-6 rounded-full bg-red-500 flex items-center justify-center"
-            style={{
-              left: clickPosition.x,
-              top: clickPosition.y,
-              transform: 'translate(-50%, -50%)'
-            }}
-          >
-            <span className="text-white font-bold text-xs">X</span>
-          </div>
-        )}
-        
-        {/* Target marker (only shown after click and when target is revealed) */}
-        {showTarget && hasClicked && revealedTargetPixel && (
-          <div
-            className="absolute w-6 h-6 rounded-full border-2 border-emerald-400"
-            style={{
-              left: `${(revealedTargetPixel.x / 1000) * gridSize.width}px`,
-              top: `${(revealedTargetPixel.y / 1000) * gridSize.height}px`,
-              transform: 'translate(-50%, -50%)'
-            }}
-          ></div>
-        )}
-        
-        {/* Overlay for disabled state */}
-        {disabled && (
-          <div className="absolute inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center">
-            <div className="bg-slate-800 rounded-lg p-4 shadow-lg max-w-xs text-center">
-              <p className="text-lg font-medium">You've already clicked today!</p>
-              <p className="text-sm text-gray-400 mt-2">Come back tomorrow for another chance.</p>
-            </div>
-          </div>
-        )}
-        
-        {/* Initial state message */}
-        {!hasClicked && !disabled && (
-          <div className="absolute inset-0 flex items-center justify-center text-white text-opacity-70">
-            <p className="font-medium">CLICK ANYWHERE</p>
-          </div>
-        )}
-      </div>
-      
-      <div className="text-xs text-gray-400 mt-2 text-center">
-        One attempt per day. Choose wisely!
-      </div>
+      />
     </div>
   );
 };

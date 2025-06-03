@@ -1,24 +1,41 @@
 import { useState } from 'react';
-import { Target } from 'lucide-react';
+import { HelpCircle, User } from 'lucide-react';
 import HowToPlayModal from './HowToPlayModal';
 
 const Header = () => {
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
 
   return (
-    <header className="bg-slate-800 border-b border-slate-700 py-4">
+    <header className="py-4">
       <div className="container mx-auto px-4 flex items-center justify-between">
-        <div className="flex items-center">
-          <Target size={24} className="text-emerald-500 mr-2" />
-          <h1 className="text-xl font-bold text-white">THE CLICK</h1>
+        <div className="flex-1">
+          <button className="text-white">
+            <span className="text-2xl">☰</span>
+          </button>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="text-4xl font-bold text-white flex items-center">
+            <span>THE</span>
+            <span className="ml-2">CLIC<span className="text-[#FF0000]">X</span></span>
+          </div>
+          <p className="text-sm text-white mt-1">One shot. Every day. Jackpot.</p>
+        </div>
+        
+        <div className="flex-1 flex items-center justify-end gap-4">
           <button 
             onClick={() => setIsHowToPlayOpen(true)}
-            className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+            className="text-white"
+            aria-label="How to Play"
           >
-            How to Play
+            <HelpCircle size={24} />
+          </button>
+          
+          <button 
+            className="text-white"
+            aria-label="User Profile"
+          >
+            <User size={24} />
           </button>
         </div>
       </div>

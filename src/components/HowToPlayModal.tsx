@@ -48,7 +48,7 @@ const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black bg-opacity-50"
+          className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black bg-opacity-80"
         >
           <motion.div
             ref={modalRef}
@@ -56,25 +56,25 @@ const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps) => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            className="bg-slate-800 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+            className="bg-[#111111] rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-white flex items-center">
-                  <Target className="text-emerald-500 mr-2" size={24} />
+                  <Target className="text-[#FF0000] mr-2" size={24} />
                   How to Play
                 </h2>
                 <button 
                   onClick={onClose}
-                  className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-slate-700"
+                  className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-[#222222]"
                 >
                   <X size={20} />
                 </button>
               </div>
               
               <div className="space-y-6">
-                <div className="bg-slate-700 rounded-lg p-4">
-                  <h3 className="font-semibold text-emerald-400 mb-2 flex items-center">
+                <div className="bg-[#222222] rounded-lg p-4">
+                  <h3 className="font-semibold text-[#FF0000] mb-2 flex items-center">
                     <MousePointerClick className="mr-2" size={18} />
                     Basic Rules
                   </h3>
@@ -86,7 +86,7 @@ const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps) => {
                 <div className="space-y-4">
                   <div className="flex">
                     <div className="flex-shrink-0 mr-3 mt-1">
-                      <div className="bg-emerald-500 text-slate-800 w-6 h-6 rounded-full flex items-center justify-center font-bold">1</div>
+                      <div className="bg-[#FF0000] text-white w-6 h-6 rounded-full flex items-center justify-center font-bold">1</div>
                     </div>
                     <div>
                       <h4 className="font-medium text-white">Click Anywhere on the Grid</h4>
@@ -96,7 +96,7 @@ const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps) => {
                   
                   <div className="flex">
                     <div className="flex-shrink-0 mr-3 mt-1">
-                      <div className="bg-emerald-500 text-slate-800 w-6 h-6 rounded-full flex items-center justify-center font-bold">2</div>
+                      <div className="bg-[#FF0000] text-white w-6 h-6 rounded-full flex items-center justify-center font-bold">2</div>
                     </div>
                     <div>
                       <h4 className="font-medium text-white">See How Close You Got</h4>
@@ -106,7 +106,7 @@ const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps) => {
                   
                   <div className="flex">
                     <div className="flex-shrink-0 mr-3 mt-1">
-                      <div className="bg-emerald-500 text-slate-800 w-6 h-6 rounded-full flex items-center justify-center font-bold">3</div>
+                      <div className="bg-[#FF0000] text-white w-6 h-6 rounded-full flex items-center justify-center font-bold">3</div>
                     </div>
                     <div>
                       <h4 className="font-medium text-white">Win the Jackpot</h4>
@@ -117,22 +117,22 @@ const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps) => {
                 
                 <div className="space-y-3">
                   <div className="flex items-start">
-                    <Calendar className="text-emerald-400 mr-2 flex-shrink-0" size={18} />
+                    <Calendar className="text-[#FF0000] mr-2 flex-shrink-0" size={18} />
                     <p className="text-sm text-gray-300">The target pixel changes every day at midnight.</p>
                   </div>
                   
                   <div className="flex items-start">
-                    <Award className="text-emerald-400 mr-2 flex-shrink-0" size={18} />
+                    <Award className="text-[#FF0000] mr-2 flex-shrink-0" size={18} />
                     <p className="text-sm text-gray-300">The jackpot increases over time until someone hits the exact pixel.</p>
                   </div>
                   
                   <div className="flex items-start">
-                    <Clock className="text-emerald-400 mr-2 flex-shrink-0" size={18} />
+                    <Clock className="text-[#FF0000] mr-2 flex-shrink-0" size={18} />
                     <p className="text-sm text-gray-300">Return daily for more chances to win!</p>
                   </div>
                 </div>
                 
-                <div className="bg-slate-700 rounded-lg p-4">
+                <div className="bg-[#222222] rounded-lg p-4">
                   <h3 className="font-semibold text-white mb-1">Pro Tip</h3>
                   <p className="text-gray-300 text-sm">
                     Share your results with friends and see who can get closest to the target!
@@ -142,7 +142,7 @@ const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps) => {
               
               <button
                 onClick={onClose}
-                className="w-full mt-6 bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-4 rounded-lg transition-colors font-medium"
+                className="w-full mt-6 bg-[#FF0000] hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors font-medium"
               >
                 Got It!
               </button>
