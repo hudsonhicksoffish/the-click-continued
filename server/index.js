@@ -1,7 +1,15 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { initDb, getJackpot, updateJackpot, resetJackpot, logJackpotHistory } from './database.js';
+import { 
+  initDb, 
+  getJackpot, 
+  updateJackpot, 
+  resetJackpot, 
+  logJackpotHistory, 
+  getOrCreateDailyTargetPixel,
+  forceNewDailyTarget
+} from './database.js';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -24,73 +32,102 @@ const io = new Server(httpServer, {
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 let connectedClients = new Set();
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   console.log(`Client connected: ${socket.id}`);
   connectedClients.add(socket.id);
+  
+  // Get the current target pixel for today
+  const targetPixel = await getOrCreateDailyTargetPixel();
+  console.log(`Current target for ${targetPixel.date}: (${targetPixel.x}, ${targetPixel.y})`);
   
   // Send current jackpot value on connection
   getJackpot().then(jackpot => {
     socket.emit('jackpot_update', { amount: jackpot.current_amount });
   });
 
-  // Handle incorrect clicks - increment jackpot
-  socket.on('incorrect_click', async () => {
+  // Handle clicks - server calculates the distance
+  socket.on('click', async (data) => {
     try {
       const userId = socket.id;
-      const previousAmount = await getJackpot();
-      const newAmount = parseFloat(previousAmount.current_amount) + 0.001;
-      const roundedAmount = Math.round(newAmount * 1000) / 1000;
+      const { x, y } = data;
       
-      // Update jackpot with optimistic locking
-      const updated = await updateJackpot(roundedAmount, userId);
+      // Validate inputs
+      if (typeof x !== 'number' || typeof y !== 'number' || x < 0 || x > 999 || y < 0 || y > 999) {
+        socket.emit('error', { message: 'Invalid coordinates' });
+        return;
+      }
       
-      if (updated) {
-        // Log the change
-        await logJackpotHistory(
-          previousAmount.current_amount,
-          roundedAmount,
-          'INCREMENT',
-          userId
-        );
+      // Calculate distance to target
+      const distance = Math.sqrt(Math.pow(targetPixel.x - x, 2) + Math.pow(targetPixel.y - y, 2));
+      const roundedDistance = Math.round(distance * 1000) / 1000;
+      
+      // Get current jackpot value
+      const currentJackpot = await getJackpot();
+      
+      // Check if it's a direct hit
+      if (roundedDistance === 0) {
+        // Winner! Reset the jackpot
+        const baseAmount = 100.00;
+        const updated = await resetJackpot(baseAmount, userId);
         
-        // Broadcast to all clients
-        io.emit('jackpot_update', { amount: roundedAmount });
+        if (updated) {
+          // Log the jackpot win
+          await logJackpotHistory(
+            currentJackpot.current_amount,
+            baseAmount,
+            'JACKPOT_WIN',
+            userId
+          );
+          
+          // Generate a new target for tomorrow
+          const newTarget = await forceNewDailyTarget();
+          
+          // Send result to client (including the target location)
+          socket.emit('click_result', { 
+            distance: roundedDistance,
+            targetX: targetPixel.x,
+            targetY: targetPixel.y,
+            success: true
+          });
+          
+          // Broadcast jackpot reset to all clients
+          io.emit('jackpot_update', { amount: baseAmount });
+          io.emit('jackpot_won', { 
+            amount: currentJackpot.current_amount,
+            timestamp: new Date().toISOString()
+          });
+        }
+      } else {
+        // Missed the target - increment jackpot
+        const newAmount = parseFloat(currentJackpot.current_amount) + 0.001;
+        const roundedAmount = Math.round(newAmount * 1000) / 1000;
+        
+        const updated = await updateJackpot(roundedAmount, userId);
+        
+        if (updated) {
+          // Log the change
+          await logJackpotHistory(
+            currentJackpot.current_amount,
+            roundedAmount,
+            'INCREMENT',
+            userId
+          );
+          
+          // Send result to client (including the target location)
+          socket.emit('click_result', { 
+            distance: roundedDistance,
+            targetX: targetPixel.x,
+            targetY: targetPixel.y,
+            success: false
+          });
+          
+          // Broadcast to all clients
+          io.emit('jackpot_update', { amount: roundedAmount });
+        }
       }
     } catch (error) {
-      console.error('Error processing incorrect click:', error);
-      socket.emit('error', { message: 'Failed to update jackpot' });
-    }
-  });
-
-  // Handle correct clicks - reset jackpot
-  socket.on('correct_click', async () => {
-    try {
-      const userId = socket.id;
-      const previousAmount = await getJackpot();
-      const baseAmount = 100.00;
-      
-      // Reset jackpot with optimistic locking
-      const updated = await resetJackpot(baseAmount, userId);
-      
-      if (updated) {
-        // Log the change
-        await logJackpotHistory(
-          previousAmount.current_amount,
-          baseAmount,
-          'RESET',
-          userId
-        );
-        
-        // Broadcast to all clients
-        io.emit('jackpot_update', { amount: baseAmount });
-        io.emit('jackpot_won', { 
-          amount: previousAmount.current_amount,
-          timestamp: new Date().toISOString()
-        });
-      }
-    } catch (error) {
-      console.error('Error processing correct click:', error);
-      socket.emit('error', { message: 'Failed to reset jackpot' });
+      console.error('Error processing click:', error);
+      socket.emit('error', { message: 'Failed to process click' });
     }
   });
 

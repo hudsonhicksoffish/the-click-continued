@@ -1,6 +1,12 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { formatDateKey, getCurrentDayNumber } from '../utils/dateUtils';
-import { initSocket, registerIncorrectClick, registerCorrectClick } from '../services/socketService';
+import { 
+  initSocket, 
+  registerClick as socketRegisterClick,
+  onJackpotUpdate, 
+  onClickResult,
+  onConnectionChange 
+} from '../services/socketService';
 
 interface Click {
   x: number;
@@ -12,7 +18,7 @@ interface Click {
 interface GameContextType {
   jackpot: number;
   setJackpot: (value: number) => void;
-  targetPixel: { x: number; y: number };
+  revealedTargetPixel: { x: number; y: number } | null;
   lastClick: Click | null;
   hasClicked: boolean;
   dayNumber: number;
@@ -21,28 +27,10 @@ interface GameContextType {
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
-// Generate target pixel based on the current day
-const generateTargetPixel = () => {
-  // Use the day number to ensure all users get the same target on the same day
-  const dayNumber = getCurrentDayNumber();
-  const seed = dayNumber * 9301 + 49297;
-  const pseudoRandom = (seed * 9301 + 49297) % 233280;
-  const rnd = pseudoRandom / 233280;
-  
-  return {
-    x: Math.floor(rnd * 1000),
-    y: Math.floor((pseudoRandom / 1000) % 1000),
-  };
-};
-
-const calculateDistance = (x1: number, y1: number, x2: number, y2: number) => {
-  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-};
-
 export function GameProvider({ children }: { children: ReactNode }) {
   const [jackpot, setJackpot] = useState(100.00); // Starting jackpot value of $100
   const [dayNumber] = useState(getCurrentDayNumber());
-  const [targetPixel] = useState(generateTargetPixel());
+  const [revealedTargetPixel, setRevealedTargetPixel] = useState<{ x: number; y: number } | null>(null);
   const [lastClick, setLastClick] = useState<Click | null>(null);
   const [hasClicked, setHasClicked] = useState(false);
 
@@ -63,38 +51,61 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const registerClick = useCallback((x: number, y: number) => {
-    const distance = calculateDistance(x, y, targetPixel.x, targetPixel.y);
+  // Listen for jackpot updates
+  useEffect(() => {
+    onJackpotUpdate((amount) => {
+      setJackpot(amount);
+    });
+
+    // Listen for click results from server
+    onClickResult((distance, targetX, targetY, success) => {
+      // Update revealed target
+      setRevealedTargetPixel({ x: targetX, y: targetY });
+      
+      // Update last click with the server-calculated distance
+      if (lastClick) {
+        const updatedClick = {
+          ...lastClick,
+          distance: distance
+        };
+        setLastClick(updatedClick);
+        
+        // Update localStorage with the new distance
+        const todayKey = formatDateKey(new Date());
+        localStorage.setItem(`click_attempt_${todayKey}`, JSON.stringify(updatedClick));
+      }
+    });
     
+    // Monitor connection status
+    onConnectionChange((status) => {
+      console.log(`Connection status: ${status ? 'connected' : 'disconnected'}`);
+    });
+  }, [lastClick]);
+
+  const registerClick = useCallback((x: number, y: number) => {
+    // Create initial click data without distance (server will calculate it)
     const clickData: Click = {
       x,
       y,
-      distance,
+      distance: -1, // Placeholder until server responds
       timestamp: new Date().toISOString(),
     };
     
     setLastClick(clickData);
     setHasClicked(true);
     
-    // Store attempt in localStorage
+    // Store attempt in localStorage (will be updated when server responds)
     const todayKey = formatDateKey(new Date());
     localStorage.setItem(`click_attempt_${todayKey}`, JSON.stringify(clickData));
     
-    // Check if we have a winner (direct hit)
-    if (distance === 0) {
-      // Register the correct click via WebSocket
-      registerCorrectClick();
-      console.log('JACKPOT WINNER!');
-    } else {
-      // Register the incorrect click via WebSocket
-      registerIncorrectClick();
-    }
-  }, [targetPixel]);
+    // Send click to server for processing
+    socketRegisterClick(x, y);
+  }, []);
 
   const value = {
     jackpot,
     setJackpot,
-    targetPixel,
+    revealedTargetPixel,
     lastClick,
     hasClicked,
     dayNumber,

@@ -6,7 +6,7 @@ interface GridProps {
 }
 
 const Grid = ({ disabled = false }: GridProps) => {
-  const { registerClick, hasClicked, lastClick, targetPixel } = useGameContext();
+  const { registerClick, hasClicked, lastClick, revealedTargetPixel } = useGameContext();
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
   const gridRef = useRef<HTMLDivElement>(null);
   const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
@@ -30,13 +30,13 @@ const Grid = ({ disabled = false }: GridProps) => {
 
   useEffect(() => {
     // Show target after click with a slight delay
-    if (hasClicked && lastClick) {
+    if (hasClicked && lastClick && revealedTargetPixel) {
       const timer = setTimeout(() => {
         setShowTarget(true);
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [hasClicked, lastClick]);
+  }, [hasClicked, lastClick, revealedTargetPixel]);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (disabled || hasClicked) return;
@@ -78,13 +78,13 @@ const Grid = ({ disabled = false }: GridProps) => {
           </div>
         )}
         
-        {/* Target marker (only shown after click) */}
-        {showTarget && hasClicked && (
+        {/* Target marker (only shown after click and when target is revealed) */}
+        {showTarget && hasClicked && revealedTargetPixel && (
           <div
             className="absolute w-6 h-6 rounded-full border-2 border-emerald-400"
             style={{
-              left: `${(targetPixel.x / 1000) * gridSize.width}px`,
-              top: `${(targetPixel.y / 1000) * gridSize.height}px`,
+              left: `${(revealedTargetPixel.x / 1000) * gridSize.width}px`,
+              top: `${(revealedTargetPixel.y / 1000) * gridSize.height}px`,
               transform: 'translate(-50%, -50%)'
             }}
           ></div>

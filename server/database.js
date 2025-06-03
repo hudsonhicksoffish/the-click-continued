@@ -10,6 +10,7 @@ const __dirname = dirname(__filename);
 const DB_DIR = join(__dirname, 'data');
 const JACKPOT_STATE_FILE = join(DB_DIR, 'jackpot_state.json');
 const JACKPOT_HISTORY_FILE = join(DB_DIR, 'jackpot_history.json');
+const DAILY_TARGET_STATE_FILE = join(DB_DIR, 'daily_target_state.json');
 
 // Ensure database directory exists
 const initDb = async () => {
@@ -44,6 +45,24 @@ const initDb = async () => {
       );
       console.log('Initialized jackpot_history.json with empty array');
     }
+    
+    // Initialize daily_target_state if it doesn't exist
+    try {
+      await fs.access(DAILY_TARGET_STATE_FILE);
+    } catch (error) {
+      // File doesn't exist, create it with default values
+      const initialTarget = {
+        target_x: Math.floor(Math.random() * 1000),
+        target_y: Math.floor(Math.random() * 1000),
+        target_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        version: 1  // For optimistic locking
+      };
+      await fs.writeFile(
+        DAILY_TARGET_STATE_FILE,
+        JSON.stringify(initialTarget, null, 2)
+      );
+      console.log('Initialized daily_target_state.json with default values');
+    }
   } catch (error) {
     console.error('Error initializing database:', error);
     throw error;
@@ -53,7 +72,8 @@ const initDb = async () => {
 // File locking mechanism
 const locks = {
   state: false,
-  history: false
+  history: false,
+  daily_target: false
 };
 
 // Helper function to acquire lock with timeout and retries
@@ -174,10 +194,103 @@ const logJackpotHistory = async (previousAmount, newAmount, actionType, userId) 
   }
 };
 
+// Get or create daily target pixel
+const getOrCreateDailyTargetPixel = async () => {
+  try {
+    await acquireLock('daily_target');
+    
+    // Read current target state
+    const data = await fs.readFile(DAILY_TARGET_STATE_FILE, 'utf8');
+    const currentTarget = JSON.parse(data);
+    
+    // Get current UTC date in YYYY-MM-DD format
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    // Check if we need to generate a new target for today
+    if (currentTarget.target_date !== currentDate) {
+      // Generate new random target
+      const newTarget = {
+        target_x: Math.floor(Math.random() * 1000),
+        target_y: Math.floor(Math.random() * 1000),
+        target_date: currentDate,
+        version: currentTarget.version + 1
+      };
+      
+      // Write updated target
+      await fs.writeFile(
+        DAILY_TARGET_STATE_FILE,
+        JSON.stringify(newTarget, null, 2)
+      );
+      
+      console.log(`Generated new target pixel for ${currentDate}: (${newTarget.target_x}, ${newTarget.target_y})`);
+      return { 
+        x: newTarget.target_x, 
+        y: newTarget.target_y, 
+        date: newTarget.target_date 
+      };
+    } else {
+      // Return existing target for today
+      return { 
+        x: currentTarget.target_x, 
+        y: currentTarget.target_y, 
+        date: currentTarget.target_date 
+      };
+    }
+  } catch (error) {
+    console.error('Error managing daily target:', error);
+    // Fallback to a default target if error
+    return { x: 500, y: 500, date: new Date().toISOString().split('T')[0] };
+  } finally {
+    releaseLock('daily_target');
+  }
+};
+
+// Force a new target generation
+const forceNewDailyTarget = async () => {
+  try {
+    await acquireLock('daily_target');
+    
+    // Read current target state
+    const data = await fs.readFile(DAILY_TARGET_STATE_FILE, 'utf8');
+    const currentTarget = JSON.parse(data);
+    
+    // Get current UTC date in YYYY-MM-DD format
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    // Generate new random target for today
+    const newTarget = {
+      target_x: Math.floor(Math.random() * 1000),
+      target_y: Math.floor(Math.random() * 1000),
+      target_date: currentDate,
+      version: currentTarget.version + 1
+    };
+    
+    // Write updated target
+    await fs.writeFile(
+      DAILY_TARGET_STATE_FILE,
+      JSON.stringify(newTarget, null, 2)
+    );
+    
+    console.log(`Forced new target pixel for ${currentDate}: (${newTarget.target_x}, ${newTarget.target_y})`);
+    return { 
+      x: newTarget.target_x, 
+      y: newTarget.target_y, 
+      date: newTarget.target_date 
+    };
+  } catch (error) {
+    console.error('Error forcing new daily target:', error);
+    throw error;
+  } finally {
+    releaseLock('daily_target');
+  }
+};
+
 export {
   initDb,
   getJackpot,
   updateJackpot,
   resetJackpot,
-  logJackpotHistory
+  logJackpotHistory,
+  getOrCreateDailyTargetPixel,
+  forceNewDailyTarget
 };

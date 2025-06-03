@@ -13,6 +13,9 @@ const jackpotCallbacks: JackpotCallback[] = [];
 type ConnectionCallback = (status: boolean) => void;
 const connectionCallbacks: ConnectionCallback[] = [];
 
+type ClickResultCallback = (distance: number, targetX: number, targetY: number, success: boolean) => void;
+const clickResultCallbacks: ClickResultCallback[] = [];
+
 // Initialize WebSocket connection
 export const initSocket = (): void => {
   if (socket) {
@@ -61,6 +64,20 @@ export const initSocket = (): void => {
       notifyJackpotChange(jackpotAmount);
     }
   });
+  
+  // Click result from server
+  socket.on('click_result', (data) => {
+    if (typeof data.distance === 'number' && 
+        typeof data.targetX === 'number' && 
+        typeof data.targetY === 'number') {
+      notifyClickResult(
+        data.distance, 
+        data.targetX, 
+        data.targetY, 
+        data.success || false
+      );
+    }
+  });
 
   // Heartbeat response
   socket.on('heartbeat', () => {
@@ -93,6 +110,11 @@ export const onConnectionChange = (callback: ConnectionCallback): void => {
   connectionCallbacks.push(callback);
 };
 
+// Register for click result updates
+export const onClickResult = (callback: ClickResultCallback): void => {
+  clickResultCallbacks.push(callback);
+};
+
 // Notify all registered callbacks about jackpot changes
 const notifyJackpotChange = (amount: number): void => {
   jackpotCallbacks.forEach(callback => callback(amount));
@@ -103,27 +125,29 @@ const notifyConnectionChange = (status: boolean): void => {
   connectionCallbacks.forEach(callback => callback(status));
 };
 
-// Register incorrect click
-export const registerIncorrectClick = (): void => {
+// Notify all registered callbacks about click results
+const notifyClickResult = (distance: number, targetX: number, targetY: number, success: boolean): void => {
+  clickResultCallbacks.forEach(callback => callback(distance, targetX, targetY, success));
+};
+
+// Register a click
+export const registerClick = (x: number, y: number): void => {
   if (socket?.connected) {
-    socket.emit('incorrect_click');
+    socket.emit('click', { x, y });
   } else {
     console.error('Cannot register click: socket not connected');
     // Queue for when connection is restored
-    onConnectionChange((status) => {
+    const onceConnected = (status: boolean) => {
       if (status) {
-        socket?.emit('incorrect_click');
+        socket?.emit('click', { x, y });
+        // Remove this one-time handler after execution
+        const index = connectionCallbacks.indexOf(onceConnected);
+        if (index > -1) {
+          connectionCallbacks.splice(index, 1);
+        }
       }
-    });
-  }
-};
-
-// Register correct click
-export const registerCorrectClick = (): void => {
-  if (socket?.connected) {
-    socket.emit('correct_click');
-  } else {
-    console.error('Cannot register click: socket not connected');
+    };
+    onConnectionChange(onceConnected);
   }
 };
 
