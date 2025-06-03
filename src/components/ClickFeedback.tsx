@@ -151,7 +151,7 @@ const ClickFeedback = () => {
   const { distance } = lastClick;
   const formattedDistance = Math.round(distance);
   
-  // Web Share API handler
+  // Web Share API handler - FIXED to better handle permission issues
   const handleShare = async () => {
     if (!shareImage) return;
     
@@ -161,31 +161,46 @@ const ClickFeedback = () => {
       const blob = await res.blob();
       const file = new File([blob], 'the-click-result.png', { type: 'image/png' });
       
+      // First try with file sharing if supported
       if (navigator.share && 
           navigator.canShare && 
           navigator.canShare({ files: [file] })) {
-        // If Web Share API with files is supported
-        await navigator.share({
-          title: 'The Click - Daily Pixel Challenge',
-          text: generateShareText(),
-          files: [file]
-        });
-        setShowShareModal(false);
-      } else if (navigator.share) {
-        // Fallback to just sharing text if files aren't supported
-        await navigator.share({
-          title: 'The Click - Daily Pixel Challenge',
-          text: generateShareText(),
-          url: 'https://theclickgame.com'
-        });
-        setShowShareModal(false);
-      } else {
-        // If Web Share API is not available at all
-        setShowPlatformOptions(true);
+        try {
+          // Try file sharing
+          await navigator.share({
+            title: 'The Click - Daily Pixel Challenge',
+            text: generateShareText(),
+            files: [file]
+          });
+          setShowShareModal(false);
+          return; // Exit if successful
+        } catch (fileShareError) {
+          console.error('File sharing failed:', fileShareError);
+          // Continue to text-only sharing
+        }
       }
+      
+      // If file sharing failed or isn't available, try text-only sharing
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'The Click - Daily Pixel Challenge',
+            text: generateShareText(),
+            url: 'https://theclickgame.com'
+          });
+          setShowShareModal(false);
+          return; // Exit if successful
+        } catch (textShareError) {
+          console.error('Text sharing failed:', textShareError);
+          // Fall through to platform options
+        }
+      }
+      
+      // If we reach here, all Web Share API attempts failed or weren't available
+      setShowPlatformOptions(true);
     } catch (err) {
-      console.error('Error sharing:', err);
-      // Fall back to platform options if sharing fails
+      console.error('Error in share process:', err);
+      // Fall back to platform options
       setShowPlatformOptions(true);
     }
   };
