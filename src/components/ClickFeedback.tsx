@@ -22,7 +22,7 @@ const ClickFeedback = () => {
     return `The Click: Day ${dayNumber}\nDistance: ${Math.round(lastClick.distance)}px\nJackpot: $${formattedJackpot}\ntheclickgame.com`;
   }, [lastClick, dayNumber, jackpot]);
   
-  // Generate image for sharing
+  // Generate image for sharing with dynamic sizing
   const generateShareImage = useCallback(() => {
     if (!lastClick) return;
     
@@ -32,32 +32,53 @@ const ClickFeedback = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    // Canvas dimensions
+    // Canvas width is fixed
     const width = 500;
-    const height = 400; // Made taller to accommodate spaced-out text
+    
+    // Vertical spacing constant
+    const verticalSpacing = 20;
+    
+    // First set canvas width
     canvas.width = width;
-    canvas.height = height;
+    
+    // Define vertical positions dynamically
+    // Title position
+    const titleY = 40;
+    
+    // Grid parameters
+    const gridSize = 200;
+    const gridX = (width - gridSize) / 2;
+    const gridY = titleY + 30; // Position after title
+    
+    // Calculate positions for text elements after the grid
+    const distanceTextY = gridY + gridSize + verticalSpacing * 2;
+    const jackpotTextY = distanceTextY + verticalSpacing * 2;
+    
+    // Website URL is positioned with enough space after jackpot
+    const websiteTextY = jackpotTextY + verticalSpacing * 2;
+    
+    // Calculate total canvas height with padding at the bottom
+    const totalHeight = websiteTextY + verticalSpacing * 2;
+    
+    // Set canvas height
+    canvas.height = totalHeight;
     
     // Background
     ctx.fillStyle = '#0f172a'; // slate-900
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, width, totalHeight);
     
     // Title
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 24px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`The Click: Day ${dayNumber}`, width / 2, 40);
+    ctx.textBaseline = 'top';
+    ctx.fillText(`The Click: Day ${dayNumber}`, width / 2, titleY);
     
     // Draw grid
-    const gridSize = 200;
-    const gridX = (width - gridSize) / 2;
-    const gridY = 70;
-    
-    // Grid background
     ctx.fillStyle = '#1e293b'; // slate-800
     ctx.fillRect(gridX, gridY, gridSize, gridSize);
     
-    // Grid border only - no internal grid lines
+    // Grid border
     ctx.strokeStyle = '#475569'; // slate-600
     ctx.lineWidth = 2;
     ctx.strokeRect(gridX, gridY, gridSize, gridSize);
@@ -82,24 +103,27 @@ const ClickFeedback = () => {
     ctx.textBaseline = 'middle';
     ctx.fillText('X', markerX, markerY);
     
-    // Distance info - moved up
+    // Reset textBaseline for subsequent text
+    ctx.textBaseline = 'top';
+    
+    // Distance info
     const formattedDistance = Math.round(lastClick.distance);
     ctx.fillStyle = '#ffffff';
     ctx.font = '20px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`Distance: ${formattedDistance}px`, width / 2, gridY + gridSize + 40);
+    ctx.fillText(`Distance: ${formattedDistance}px`, width / 2, distanceTextY);
     
-    // Jackpot info - positioned with more space
+    // Jackpot info
     const formattedJackpot = jackpot.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
-    ctx.fillText(`Jackpot: $${formattedJackpot}`, width / 2, gridY + gridSize + 80);
+    ctx.fillText(`Jackpot: $${formattedJackpot}`, width / 2, jackpotTextY);
     
-    // Website URL - much higher to prevent overlap
+    // Website URL
     ctx.fillStyle = '#3b82f6'; // blue-500
     ctx.font = '18px Inter, sans-serif';
-    ctx.fillText('theclickgame.com', width / 2, height - 50); 
+    ctx.fillText('theclickgame.com', width / 2, websiteTextY);
     
     // Convert to data URL
     const dataUrl = canvas.toDataURL('image/png');
