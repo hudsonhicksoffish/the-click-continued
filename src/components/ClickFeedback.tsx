@@ -151,53 +151,79 @@ const ClickFeedback = () => {
   const { distance } = lastClick;
   const formattedDistance = Math.round(distance);
   
-  // Web Share API handler - FIXED to better handle permission issues
-  const handleShare = async () => {
+  // Utility function to convert data URL to Blob synchronously
+  const dataURLtoBlob = (dataURL: string) => {
+    // Convert base64 to raw binary data held in a string
+    const byteString = atob(dataURL.split(',')[1]);
+    
+    // Separate out the mime component
+    const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+    
+    // Write the bytes of the string to an ArrayBuffer
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    
+    // Create a blob with the ArrayBuffer and mime type
+    return new Blob([ab], { type: mimeString });
+  };
+  
+  // Web Share API handler - FIXED to maintain user gesture chain
+  const handleShare = () => {
     if (!shareImage) return;
     
     try {
-      // Convert data URL to blob for sharing
-      const res = await fetch(shareImage);
-      const blob = await res.blob();
+      // Convert data URL to blob synchronously (no async fetch)
+      const blob = dataURLtoBlob(shareImage);
       const file = new File([blob], 'the-click-result.png', { type: 'image/png' });
       
       // First try with file sharing if supported
       if (navigator.share && 
           navigator.canShare && 
           navigator.canShare({ files: [file] })) {
-        try {
-          // Try file sharing
-          await navigator.share({
-            title: 'The Click - Daily Pixel Challenge',
-            text: generateShareText(),
-            files: [file]
-          });
+        navigator.share({
+          title: 'The Click - Daily Pixel Challenge',
+          text: generateShareText(),
+          files: [file]
+        }).then(() => {
           setShowShareModal(false);
-          return; // Exit if successful
-        } catch (fileShareError) {
+        }).catch((fileShareError) => {
           console.error('File sharing failed:', fileShareError);
-          // Continue to text-only sharing
-        }
-      }
-      
-      // If file sharing failed or isn't available, try text-only sharing
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: 'The Click - Daily Pixel Challenge',
-            text: generateShareText(),
-            url: 'https://theclickgame.com'
-          });
+          // Try text-only sharing
+          if (navigator.share) {
+            return navigator.share({
+              title: 'The Click - Daily Pixel Challenge',
+              text: generateShareText(),
+              url: 'https://theclickgame.com'
+            });
+          }
+          throw new Error('Text sharing not available');
+        }).then(() => {
           setShowShareModal(false);
-          return; // Exit if successful
-        } catch (textShareError) {
+        }).catch((textShareError) => {
           console.error('Text sharing failed:', textShareError);
           // Fall through to platform options
-        }
+          setShowPlatformOptions(true);
+        });
+      } else if (navigator.share) {
+        // If file sharing isn't available, try text-only sharing
+        navigator.share({
+          title: 'The Click - Daily Pixel Challenge',
+          text: generateShareText(),
+          url: 'https://theclickgame.com'
+        }).then(() => {
+          setShowShareModal(false);
+        }).catch((err) => {
+          console.error('Text sharing failed:', err);
+          setShowPlatformOptions(true);
+        });
+      } else {
+        // Web Share API not available
+        setShowPlatformOptions(true);
       }
-      
-      // If we reach here, all Web Share API attempts failed or weren't available
-      setShowPlatformOptions(true);
     } catch (err) {
       console.error('Error in share process:', err);
       // Fall back to platform options
