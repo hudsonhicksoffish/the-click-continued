@@ -25,3 +25,4 @@ dist-ssr
 
 # Database files
 server/data/*.json
+.env
