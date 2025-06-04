@@ -64,7 +64,7 @@ const ClickFeedback = () => {
     canvas.height = totalHeight;
     
     // Background
-    ctx.fillStyle = '#0f172a'; // slate-900
+    ctx.fillStyle = '#000000'; // Black background to match app theme
     ctx.fillRect(0, 0, width, totalHeight);
     
     // Title
@@ -72,14 +72,14 @@ const ClickFeedback = () => {
     ctx.font = 'bold 24px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(`The Click: Day ${dayNumber}`, width / 2, titleY);
+    ctx.fillText(`THE CLICK: DAY ${dayNumber}`, width / 2, titleY);
     
     // Draw grid
-    ctx.fillStyle = '#1e293b'; // slate-800
+    ctx.fillStyle = '#111111'; // Dark background
     ctx.fillRect(gridX, gridY, gridSize, gridSize);
     
     // Grid border
-    ctx.strokeStyle = '#475569'; // slate-600
+    ctx.strokeStyle = '#ffffff'; // White border to match game
     ctx.lineWidth = 2;
     ctx.strokeRect(gridX, gridY, gridSize, gridSize);
     
@@ -91,7 +91,7 @@ const ClickFeedback = () => {
     const markerX = gridX + normalizedX * gridSize;
     const markerY = gridY + normalizedY * gridSize;
     
-    ctx.fillStyle = '#ef4444'; // red-500
+    ctx.fillStyle = '#FF0000'; // Red X to match theme
     ctx.beginPath();
     ctx.arc(markerX, markerY, 8, 0, Math.PI * 2);
     ctx.fill();
@@ -121,7 +121,7 @@ const ClickFeedback = () => {
     ctx.fillText(`Jackpot: $${formattedJackpot}`, width / 2, jackpotTextY);
     
     // Website URL
-    ctx.fillStyle = '#3b82f6'; // blue-500
+    ctx.fillStyle = '#FF0000'; // Red to match theme
     ctx.font = '18px Inter, sans-serif';
     ctx.fillText('theclickgame.com', width / 2, websiteTextY);
     
@@ -314,7 +314,7 @@ const ClickFeedback = () => {
       
       <button
         onClick={() => setShowShareModal(true)}
-        className="mt-4 bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-6 rounded-lg transition-colors inline-flex items-center"
+        className="mt-4 bg-[#FF0000] hover:bg-red-700 text-white py-2 px-6 rounded-lg transition-colors inline-flex items-center"
         aria-label="Share your result"
       >
         <Share2 className="h-5 w-5 mr-2" />
@@ -329,13 +329,15 @@ const ClickFeedback = () => {
       />
       
       {showShareModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#111111] rounded-lg p-6 max-w-md w-full border border-[#333333]">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">Share Your Result</h2>
+              <h2 className="text-xl font-bold text-white flex items-center">
+                Share Your Result
+              </h2>
               <button 
                 onClick={handleCloseModal}
-                className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-slate-700"
+                className="text-gray-400 hover:text-[#FF0000] transition-colors p-1 rounded-full hover:bg-[#222222]"
                 aria-label="Close sharing dialog"
               >
                 <X size={20} />
@@ -347,7 +349,7 @@ const ClickFeedback = () => {
                 <img 
                   src={shareImage} 
                   alt="Your click result" 
-                  className="rounded-lg border border-slate-700 max-w-full h-auto"
+                  className="rounded-lg border border-[#333333] max-w-full h-auto"
                 />
               </div>
             )}
@@ -356,7 +358,7 @@ const ClickFeedback = () => {
               <div className="flex gap-3 flex-wrap">
                 <button 
                   onClick={handleShare}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+                  className="flex-1 bg-[#FF0000] hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
                   aria-label="Share to platforms"
                 >
                   <Share2 className="h-4 w-4 mr-2" />
@@ -365,7 +367,7 @@ const ClickFeedback = () => {
                 
                 <button 
                   onClick={saveImage}
-                  className="flex-1 bg-slate-600 hover:bg-slate-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+                  className="flex-1 bg-[#222222] hover:bg-[#333333] text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
                   aria-label="Save image"
                 >
                   <Copy className="h-4 w-4 mr-2" />
@@ -374,7 +376,7 @@ const ClickFeedback = () => {
                 
                 <button 
                   onClick={handleCloseModal}
-                  className="bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-lg transition-colors"
+                  className="bg-[#333333] hover:bg-[#444444] text-white py-2 px-4 rounded-lg transition-colors"
                   aria-label="Close sharing dialog"
                 >
                   Close
@@ -386,7 +388,7 @@ const ClickFeedback = () => {
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <button 
                     onClick={shareToTwitter}
-                    className="bg-slate-700 hover:bg-[#1DA1F2] text-white py-2 px-3 rounded-lg transition-colors flex items-center"
+                    className="bg-[#222222] hover:bg-[#1DA1F2] text-white py-2 px-3 rounded-lg transition-colors flex items-center"
                     aria-label="Share to Twitter"
                   >
                     <Twitter className="h-4 w-4 mr-2" />
@@ -395,7 +397,7 @@ const ClickFeedback = () => {
                   
                   <button 
                     onClick={shareToFacebook}
-                    className="bg-slate-700 hover:bg-[#1877F2] text-white py-2 px-3 rounded-lg transition-colors flex items-center"
+                    className="bg-[#222222] hover:bg-[#1877F2] text-white py-2 px-3 rounded-lg transition-colors flex items-center"
                     aria-label="Share to Facebook"
                   >
                     <Facebook className="h-4 w-4 mr-2" />
@@ -404,7 +406,7 @@ const ClickFeedback = () => {
                   
                   <button 
                     onClick={shareToLinkedIn}
-                    className="bg-slate-700 hover:bg-[#0A66C2] text-white py-2 px-3 rounded-lg transition-colors flex items-center"
+                    className="bg-[#222222] hover:bg-[#0A66C2] text-white py-2 px-3 rounded-lg transition-colors flex items-center"
                     aria-label="Share to LinkedIn"
                   >
                     <Linkedin className="h-4 w-4 mr-2" />
@@ -413,7 +415,7 @@ const ClickFeedback = () => {
                   
                   <button 
                     onClick={shareViaEmail}
-                    className="bg-slate-700 hover:bg-slate-600 text-white py-2 px-3 rounded-lg transition-colors flex items-center"
+                    className="bg-[#222222] hover:bg-[#333333] text-white py-2 px-3 rounded-lg transition-colors flex items-center"
                     aria-label="Share via Email"
                   >
                     <Mail className="h-4 w-4 mr-2" />
@@ -422,7 +424,7 @@ const ClickFeedback = () => {
                   
                   <button 
                     onClick={shareToDiscord}
-                    className="bg-slate-700 hover:bg-[#5865F2] text-white py-2 px-3 rounded-lg transition-colors flex items-center"
+                    className="bg-[#222222] hover:bg-[#5865F2] text-white py-2 px-3 rounded-lg transition-colors flex items-center"
                     aria-label="Share to Discord"
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
@@ -431,7 +433,7 @@ const ClickFeedback = () => {
                   
                   <button 
                     onClick={shareToSlack}
-                    className="bg-slate-700 hover:bg-[#4A154B] text-white py-2 px-3 rounded-lg transition-colors flex items-center"
+                    className="bg-[#222222] hover:bg-[#4A154B] text-white py-2 px-3 rounded-lg transition-colors flex items-center"
                     aria-label="Share to Slack"
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
@@ -442,8 +444,8 @@ const ClickFeedback = () => {
                 <div className="flex gap-3">
                   <button 
                     onClick={saveImage}
-                    className={`flex-1 bg-slate-600 hover:bg-slate-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center ${
-                      copySuccess ? 'bg-green-600' : ''
+                    className={`flex-1 bg-[#222222] hover:bg-[#333333] text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center ${
+                      copySuccess ? 'bg-[#FF0000]' : ''
                     }`}
                     aria-label="Save image"
                   >
@@ -453,7 +455,7 @@ const ClickFeedback = () => {
                   
                   <button 
                     onClick={() => setShowPlatformOptions(false)}
-                    className="bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-lg transition-colors"
+                    className="bg-[#333333] hover:bg-[#444444] text-white py-2 px-4 rounded-lg transition-colors"
                     aria-label="Go back"
                   >
                     Back
