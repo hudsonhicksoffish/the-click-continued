@@ -6,12 +6,9 @@ interface GridProps {
 }
 
 const Grid = ({ disabled = false }: GridProps) => {
-  const { registerClick, hasClicked, lastClick, setHasClicked } = useGameContext();
+  const { registerClick, hasClicked, lastClick, revealedTargetPixel, setHasClicked, devMode } = useGameContext
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
-  
-  // Check for developer mode
-  const isDevMode = new URLSearchParams(window.location.search).get('dev') === 'true';
   
   // Setup and resize canvas
   useEffect(() => {
@@ -64,7 +61,7 @@ const Grid = ({ disabled = false }: GridProps) => {
 
   // Reset canvas for dev mode when double-clicked
   const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isDevMode && hasClicked) {
+    if (devMode && hasClicked) {
       e.preventDefault();
       setHasClicked(false);
       drawCanvas();
@@ -280,7 +277,7 @@ const Grid = ({ disabled = false }: GridProps) => {
   };
   
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (disabled || (hasClicked && !isDevMode)) return;
+    if (disabled || (hasClicked && !devMode)) return;
     
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -296,7 +293,7 @@ const Grid = ({ disabled = false }: GridProps) => {
     const gridY = Math.floor((y / rect.height) * 1000);
     
     // If in dev mode and already clicked, reset state first
-    if (isDevMode && hasClicked) {
+    if (devMode && hasClicked) {
       setHasClicked(false);
     }
     
@@ -311,17 +308,17 @@ const Grid = ({ disabled = false }: GridProps) => {
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         className={`w-full aspect-square ${
-          disabled ? 'opacity-75 cursor-not-allowed' : hasClicked && !isDevMode ? 'cursor-default' : 'cursor-pointer'
+          disabled ? 'opacity-75 cursor-not-allowed' : hasClicked && !devMode ? 'cursor-default' : 'cursor-pointer'
         }`}
       />
       
-      {isDevMode && (
+      {devMode && (
         <div className="text-xs text-[#FF0000] mt-2 text-center">
           Developer mode: {hasClicked ? "Click again to retry" : "Unlimited attempts enabled"}
         </div>
       )}
       
-      {!isDevMode && (
+      {!devMode && (
         <div className="text-xs text-gray-400 mt-2 text-center">
           One attempt per day. Choose wisely!
         </div>
