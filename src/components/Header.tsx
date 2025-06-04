@@ -19,7 +19,7 @@ const PixelatedX = () => {
   
   return (
     <div 
-      className="inline-block" 
+      className="inline-block ml-2" 
       style={{ 
         width: `${width}px`, 
         height: `${height}px`,
