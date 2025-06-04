@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useGameContext } from '../contexts/GameContext';
-import { getTimeUntilTomorrow } from '../utils/dateUtils';
 import { onJackpotUpdate, onConnectionChange } from '../services/socketService';
 
 const JackpotDisplay = () => {
-  const { jackpot, setJackpot, hasClicked } = useGameContext();
-  const [timeUntilTomorrow, setTimeUntilTomorrow] = useState(getTimeUntilTomorrow());
+  const { jackpot, setJackpot } = useGameContext();
   const [isConnected, setIsConnected] = useState(true);
   
   // Format jackpot to fixed display format (e.g., 0,001,000.00)
@@ -40,15 +38,6 @@ const JackpotDisplay = () => {
     return [result, decimalPart];
   };
 
-  // Update countdown timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeUntilTomorrow(getTimeUntilTomorrow());
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, []);
-
   // WebSocket updates for jackpot
   useEffect(() => {
     // Register for jackpot updates
@@ -66,9 +55,6 @@ const JackpotDisplay = () => {
   
   // Split the formatted jackpot into individual digits for display
   const jackpotDigits = integerPart.split('');
-  
-  // For the timer display after click
-  const timerParts = timeUntilTomorrow.split(':');
 
   return (
     <div className="text-center mb-6">
@@ -93,21 +79,6 @@ const JackpotDisplay = () => {
           ))}
         </div>
       </div>
-      
-      {/* Display countdown timer for post-click state */}
-      {hasClicked && (
-        <div className="mt-8 mb-4">
-          <div className="text-white text-xl mb-2">Next click in:</div>
-          <div className="flex items-center justify-center text-white text-5xl font-mono">
-            {timerParts.map((part, index) => (
-              <span key={index}>
-                {part}
-                {index < timerParts.length - 1 && <span className="mx-1">:</span>}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

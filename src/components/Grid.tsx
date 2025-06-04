@@ -86,21 +86,21 @@ const Grid = ({ disabled = false }: GridProps) => {
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, displayWidth, displayHeight);
     
-    // Draw border
+    // Draw border - ALWAYS draw the border regardless of click state
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 3;
     ctx.strokeRect(1.5, 1.5, displayWidth - 3, displayHeight - 3);
     
     // If user has clicked, draw the post-click state
     if (hasClicked && lastClick) {
+      // Draw "SEE YOU TMRW" pixel art - Draw this first so it doesn't cover the click marker
+      drawSeeYouTomorrow(ctx, displayWidth, displayHeight);
+      
       // Draw user's click marker
       const normalizedX = (lastClick.x / 1000) * displayWidth;
       const normalizedY = (lastClick.y / 1000) * displayHeight;
       
       drawPixelatedX(ctx, normalizedX, normalizedY, '#FF0000');
-      
-      // Draw "SEE YOU TMRW" pixel art
-      drawSeeYouTomorrow(ctx, displayWidth, displayHeight);
     }
     
     // If target is revealed, draw target marker
@@ -112,14 +112,14 @@ const Grid = ({ disabled = false }: GridProps) => {
     }
   };
   
-  // Draw a pixelated 'X' marker
+  // Draw a pixelated 'X' marker - increased size for better visibility
   const drawPixelatedX = (
     ctx: CanvasRenderingContext2D, 
     x: number, 
     y: number, 
     color: string
   ) => {
-    const pixelSize = 2;
+    const pixelSize = 4; // Increased from 2 to 4 for better visibility
     ctx.fillStyle = color;
     
     // Draw a 5x5 pixel X
@@ -148,70 +148,129 @@ const Grid = ({ disabled = false }: GridProps) => {
     }
   };
   
-  // Draw "SEE YOU TMRW" pixel art
+  // Draw "SEE YOU TMRW" pixel art - redesigned to fill more of the canvas and separate into three lines
   const drawSeeYouTomorrow = (
     ctx: CanvasRenderingContext2D,
     width: number,
     height: number
   ) => {
-    // Define pixel art for "SEE YOU TMRW" text
-    const pixelArt = [
-      [0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0],
-      [0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
-      [0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-      [0,0,0,1,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,0],
-      [0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-      [0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
-      [0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0],
-      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-      [1,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
-      [1,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
-      [0,1,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
-      [0,1,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
-      [0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
-      [0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
-      [0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0],
-      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,1,1,1,0,1,0],
-      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0],
-      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0],
-      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0],
-      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0],
-      [1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0],
-      [0,1,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,1,0]
+    // Define pixel art for "SEE" text (first line)
+    const seePixelArt = [
+      [1,1,1,0,1,1,1,0,1,1,1],
+      [1,0,0,0,1,0,0,0,1,0,0],
+      [1,0,0,0,1,0,0,0,1,0,0],
+      [0,1,1,0,1,1,1,0,1,1,1],
+      [0,0,0,1,1,0,0,0,1,0,0],
+      [1,0,0,0,1,0,0,0,1,0,0],
+      [0,1,1,1,1,1,1,0,1,1,1]
     ];
     
-    const pixelSize = 4;
-    const artWidth = pixelArt[0].length * pixelSize;
-    const artHeight = pixelArt.length * pixelSize;
+    // Define pixel art for "YOU" text (second line)
+    const youPixelArt = [
+      [1,0,0,0,1,0,0,1,1,1],
+      [1,0,0,0,1,0,0,1,0,1],
+      [1,0,0,0,1,0,0,1,0,1],
+      [0,1,0,1,0,0,0,1,0,1],
+      [0,1,0,1,0,0,0,1,0,1],
+      [0,0,1,0,0,0,0,1,0,1],
+      [0,0,1,0,0,0,0,1,1,1]
+    ];
     
-    // Calculate center position
-    const startX = (width - artWidth) / 2;
-    const startY = (height - artHeight) / 2;
+    // Define pixel art for "TMRW" text (third line)
+    const tmrwPixelArt = [
+      [1,1,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1],
+      [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1],
+      [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1],
+      [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1],
+      [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1],
+      [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1],
+      [0,1,0,0,1,1,1,0,0,1,0,0,0,1,1,1,0]
+    ];
     
-    // Draw darker background for pixel art
-    ctx.fillStyle = '#111111';
-    ctx.fillRect(
-      startX - pixelSize,
-      startY - pixelSize,
-      artWidth + pixelSize * 2,
-      artHeight + pixelSize * 2
+    // Calculate the maximum width of the three lines
+    const maxLineWidth = Math.max(
+      seePixelArt[0].length,
+      youPixelArt[0].length,
+      tmrwPixelArt[0].length
     );
     
-    // Draw the pixel art
+    // Calculate dynamic pixel size based on canvas width
+    const pixelSize = Math.max(4, Math.floor(width / (maxLineWidth * 1.5))); // Ensure minimum pixel size
+    
+    // Calculate total height of all three lines with spacing
+    const lineSpacing = pixelSize * 2; // Space between lines
+    const totalHeight = (seePixelArt.length + youPixelArt.length + tmrwPixelArt.length) * pixelSize + lineSpacing * 2;
+    
+    // Calculate start positions to center all lines
+    const startY = (height - totalHeight) / 2;
+    
+    // Draw darker background for all pixel art
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(
+      0, 
+      startY - pixelSize,
+      width,
+      totalHeight + pixelSize * 2
+    );
+    
+    // Draw the "SEE" pixel art (first line)
+    const seeWidth = seePixelArt[0].length * pixelSize;
+    const seeStartX = (width - seeWidth) / 2;
+    const seeStartY = startY;
+    
     ctx.fillStyle = '#222222'; // Dark gray for the text
     
-    for (let y = 0; y < pixelArt.length; y++) {
-      for (let x = 0; x < pixelArt[y].length; x++) {
-        if (pixelArt[y][x] === 1) {
-          // Randomly colorize some pixels red (X in SEE)
+    for (let y = 0; y < seePixelArt.length; y++) {
+      for (let x = 0; x < seePixelArt[y].length; x++) {
+        if (seePixelArt[y][x] === 1) {
+          // Special color for X in "SEE"
           const isRedPixel = x === 6 && y >= 0 && y <= 6;
           
           ctx.fillStyle = isRedPixel ? '#FF0000' : '#222222';
           
           ctx.fillRect(
-            startX + x * pixelSize, 
-            startY + y * pixelSize, 
+            seeStartX + x * pixelSize, 
+            seeStartY + y * pixelSize, 
+            pixelSize, 
+            pixelSize
+          );
+        }
+      }
+    }
+    
+    // Draw the "YOU" pixel art (second line)
+    const youWidth = youPixelArt[0].length * pixelSize;
+    const youStartX = (width - youWidth) / 2;
+    const youStartY = seeStartY + seePixelArt.length * pixelSize + lineSpacing;
+    
+    ctx.fillStyle = '#222222'; // Reset color
+    
+    for (let y = 0; y < youPixelArt.length; y++) {
+      for (let x = 0; x < youPixelArt[y].length; x++) {
+        if (youPixelArt[y][x] === 1) {
+          ctx.fillRect(
+            youStartX + x * pixelSize, 
+            youStartY + y * pixelSize, 
+            pixelSize, 
+            pixelSize
+          );
+        }
+      }
+    }
+    
+    // Draw the "TMRW" pixel art (third line)
+    const tmrwWidth = tmrwPixelArt[0].length * pixelSize;
+    const tmrwStartX = (width - tmrwWidth) / 2;
+    const tmrwStartY = youStartY + youPixelArt.length * pixelSize + lineSpacing;
+    
+    ctx.fillStyle = '#222222'; // Reset color
+    
+    for (let y = 0; y < tmrwPixelArt.length; y++) {
+      for (let x = 0; x < tmrwPixelArt[y].length; x++) {
+        if (tmrwPixelArt[y][x] === 1) {
+          ctx.fillRect(
+            tmrwStartX + x * pixelSize, 
+            tmrwStartY + y * pixelSize, 
             pixelSize, 
             pixelSize
           );

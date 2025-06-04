@@ -3,11 +3,13 @@ import { GameProvider } from './contexts/GameContext';
 import Header from './components/Header';
 import Grid from './components/Grid';
 import JackpotDisplay from './components/JackpotDisplay';
-import { formatDateKey } from './utils/dateUtils';
+import ClickFeedback from './components/ClickFeedback';
+import { formatDateKey, getTimeUntilTomorrow } from './utils/dateUtils';
 
 function App() {
   const [hasAttemptedToday, setHasAttemptedToday] = useState<boolean>(false);
   const [devMode, setDevMode] = useState<boolean>(false);
+  const [timeUntilTomorrow, setTimeUntilTomorrow] = useState(getTimeUntilTomorrow());
 
   useEffect(() => {
     // Check for developer mode in URL query parameters
@@ -26,6 +28,15 @@ function App() {
     }
   }, []);
 
+  // Update countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeUntilTomorrow(getTimeUntilTomorrow());
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
+
   // Allow clearing the attempt in dev mode
   const clearAttempt = () => {
     if (devMode) {
@@ -41,7 +52,23 @@ function App() {
         <Header />
         <main className="flex-1 container mx-auto px-4 py-8 flex flex-col items-center justify-center">
           <JackpotDisplay />
+          <ClickFeedback />
           <Grid disabled={devMode ? false : hasAttemptedToday} />
+          
+          {/* Countdown Timer - Moved from JackpotDisplay */}
+          {hasAttemptedToday && (
+            <div className="mt-8 mb-4">
+              <div className="text-gray-400 text-xl mb-2">Next click in:</div>
+              <div className="flex items-center justify-center text-white text-5xl font-mono">
+                {timeUntilTomorrow.split(':').map((part, index) => (
+                  <span key={index}>
+                    {part}
+                    {index < timeUntilTomorrow.split(':').length - 1 && <span className="mx-1">:</span>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           
           {/* Developer mode indicator and controls */}
           {devMode && (
