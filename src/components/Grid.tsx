@@ -6,9 +6,12 @@ interface GridProps {
 }
 
 const Grid = ({ disabled = false }: GridProps) => {
-  const { registerClick, hasClicked, lastClick, revealedTargetPixel } = useGameContext();
+  const { registerClick, hasClicked, lastClick, revealedTargetPixel, setHasClicked } = useGameContext();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
+  
+  // Check for developer mode
+  const isDevMode = new URLSearchParams(window.location.search).get('dev') === 'true';
   
   // Setup and resize canvas
   useEffect(() => {
@@ -58,6 +61,15 @@ const Grid = ({ disabled = false }: GridProps) => {
   useEffect(() => {
     drawCanvas();
   }, [hasClicked, lastClick, revealedTargetPixel, disabled]);
+
+  // Reset canvas for dev mode when double-clicked
+  const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isDevMode && hasClicked) {
+      e.preventDefault();
+      setHasClicked(false);
+      drawCanvas();
+    }
+  };
   
   // Draw the canvas based on game state
   const drawCanvas = () => {
@@ -209,7 +221,7 @@ const Grid = ({ disabled = false }: GridProps) => {
   };
   
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (disabled || hasClicked) return;
+    if (disabled || (hasClicked && !isDevMode)) return;
     
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -224,6 +236,11 @@ const Grid = ({ disabled = false }: GridProps) => {
     const gridX = Math.floor((x / rect.width) * 1000);
     const gridY = Math.floor((y / rect.height) * 1000);
     
+    // If in dev mode and already clicked, reset state first
+    if (isDevMode && hasClicked) {
+      setHasClicked(false);
+    }
+    
     // Register click
     registerClick(gridX, gridY);
   };
@@ -233,10 +250,23 @@ const Grid = ({ disabled = false }: GridProps) => {
       <canvas 
         ref={canvasRef}
         onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         className={`w-full aspect-square ${
-          disabled ? 'opacity-75 cursor-not-allowed' : hasClicked ? 'cursor-default' : 'cursor-pointer'
+          disabled ? 'opacity-75 cursor-not-allowed' : hasClicked && !isDevMode ? 'cursor-default' : 'cursor-pointer'
         }`}
       />
+      
+      {isDevMode && (
+        <div className="text-xs text-[#FF0000] mt-2 text-center">
+          Developer mode: {hasClicked ? "Click again to retry" : "Unlimited attempts enabled"}
+        </div>
+      )}
+      
+      {!isDevMode && (
+        <div className="text-xs text-gray-400 mt-2 text-center">
+          One attempt per day. Choose wisely!
+        </div>
+      )}
     </div>
   );
 };

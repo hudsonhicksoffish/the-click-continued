@@ -21,6 +21,7 @@ interface GameContextType {
   revealedTargetPixel: { x: number; y: number } | null;
   lastClick: Click | null;
   hasClicked: boolean;
+  setHasClicked: (value: boolean) => void; // Added to allow resetting in dev mode
   dayNumber: number;
   registerClick: (x: number, y: number) => void;
 }
@@ -83,6 +84,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [lastClick]);
 
   const registerClick = useCallback((x: number, y: number) => {
+    // Check for dev mode
+    const queryParams = new URLSearchParams(window.location.search);
+    const isDevMode = queryParams.get('dev') === 'true';
+    
     // Create initial click data without distance (server will calculate it)
     const clickData: Click = {
       x,
@@ -94,9 +99,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setLastClick(clickData);
     setHasClicked(true);
     
-    // Store attempt in localStorage (will be updated when server responds)
-    const todayKey = formatDateKey(new Date());
-    localStorage.setItem(`click_attempt_${todayKey}`, JSON.stringify(clickData));
+    // In dev mode, don't persist to localStorage to allow for multiple clicks
+    if (!isDevMode) {
+      const todayKey = formatDateKey(new Date());
+      localStorage.setItem(`click_attempt_${todayKey}`, JSON.stringify(clickData));
+    }
     
     // Send click to server for processing
     socketRegisterClick(x, y);
@@ -108,6 +115,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     revealedTargetPixel,
     lastClick,
     hasClicked,
+    setHasClicked, // Expose this for dev mode
     dayNumber,
     registerClick,
   };
