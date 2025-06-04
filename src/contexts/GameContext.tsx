@@ -18,7 +18,6 @@ interface Click {
 interface GameContextType {
   jackpot: number;
   setJackpot: (value: number) => void;
-  revealedTargetPixel: { x: number; y: number } | null;
   lastClick: Click | null;
   hasClicked: boolean;
   setHasClicked: (value: boolean) => void; // Added to allow resetting in dev mode
@@ -32,7 +31,6 @@ export const GameContext = createContext<GameContextType | undefined>(undefined)
 export function GameProvider({ children }: { children: ReactNode }) {
   const [jackpot, setJackpot] = useState(100.00); // Starting jackpot value of $100
   const [dayNumber] = useState(getCurrentDayNumber());
-  const [revealedTargetPixel, setRevealedTargetPixel] = useState<{ x: number; y: number } | null>(null);
   const [lastClick, setLastClick] = useState<Click | null>(null);
   const [hasClicked, setHasClicked] = useState(false);
   const [devMode, setDevMode] = useState(false);
@@ -66,9 +64,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
 
     // Listen for click results from server
-    onClickResult((distance, targetX, targetY, success) => {
+    onClickResult((distance, success) => { // targetX and targetY removed
       // Update revealed target
-      setRevealedTargetPixel({ x: targetX, y: targetY });
+      // setRevealedTargetPixel({ x: targetX, y: targetY }); // Line removed
       
       // Update last click with the server-calculated distance
       if (lastClick) {
@@ -123,7 +121,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const value = {
     jackpot,
     setJackpot,
-    revealedTargetPixel,
     lastClick,
     hasClicked,
     setHasClicked, // Expose this for dev mode

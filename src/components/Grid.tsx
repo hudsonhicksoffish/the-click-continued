@@ -6,7 +6,7 @@ interface GridProps {
 }
 
 const Grid = ({ disabled = false }: GridProps) => {
-  const { registerClick, hasClicked, lastClick, revealedTargetPixel, setHasClicked, devMode } = useGameContext();
+  const { registerClick, hasClicked, lastClick, revealedTargetPixel, setHasClicked, devMode } = useGameContext
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
   
@@ -57,7 +57,7 @@ const Grid = ({ disabled = false }: GridProps) => {
   // Redraw canvas when game state changes
   useEffect(() => {
     drawCanvas();
-  }, [hasClicked, lastClick, revealedTargetPixel, disabled]);
+  }, [hasClicked, lastClick, disabled]);
 
   // Reset canvas for dev mode when double-clicked
   const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -101,12 +101,12 @@ const Grid = ({ disabled = false }: GridProps) => {
     }
     
     // If target is revealed, draw target marker
-    if (revealedTargetPixel) {
-      const targetX = (revealedTargetPixel.x / 1000) * displayWidth;
-      const targetY = (revealedTargetPixel.y / 1000) * displayHeight;
-      
-      drawPixelatedX(ctx, targetX, targetY, '#FF0000');
-    }
+    // if (revealedTargetPixel) { // Logic removed
+    //   const targetX = (revealedTargetPixel.x / 1000) * displayWidth;
+    //   const targetY = (revealedTargetPixel.y / 1000) * displayHeight;
+    //
+    //   drawPixelatedX(ctx, targetX, targetY, '#FF0000');
+    // }
   };
   
   // Draw a pixelated 'X' marker - increased size for better visibility
