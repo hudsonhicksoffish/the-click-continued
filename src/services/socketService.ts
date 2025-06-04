@@ -13,7 +13,7 @@ const jackpotCallbacks: JackpotCallback[] = [];
 type ConnectionCallback = (status: boolean) => void;
 const connectionCallbacks: ConnectionCallback[] = [];
 
-type ClickResultCallback = (distance: number, targetX: number, targetY: number, success: boolean) => void;
+type ClickResultCallback = (distance: number, success: boolean) => void;
 const clickResultCallbacks: ClickResultCallback[] = [];
 
 // Initialize WebSocket connection
@@ -68,13 +68,10 @@ export const initSocket = (): void => {
   // Click result from server
   socket.on('click_result', (data) => {
     if (typeof data.distance === 'number' && 
-        typeof data.targetX === 'number' && 
-        typeof data.targetY === 'number') {
+        typeof data.success === 'boolean') { // Check for success property
       notifyClickResult(
         data.distance, 
-        data.targetX, 
-        data.targetY, 
-        data.success || false
+        data.success
       );
     }
   });
@@ -126,8 +123,8 @@ const notifyConnectionChange = (status: boolean): void => {
 };
 
 // Notify all registered callbacks about click results
-const notifyClickResult = (distance: number, targetX: number, targetY: number, success: boolean): void => {
-  clickResultCallbacks.forEach(callback => callback(distance, targetX, targetY, success));
+const notifyClickResult = (distance: number, success: boolean): void => {
+  clickResultCallbacks.forEach(callback => callback(distance, success));
 };
 
 // Register a click

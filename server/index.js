@@ -85,8 +85,6 @@ io.on('connection', async (socket) => {
           // Send result to client (including the target location)
           socket.emit('click_result', { 
             distance: roundedDistance,
-            targetX: targetPixel.x,
-            targetY: targetPixel.y,
             success: true
           });
           
@@ -116,8 +114,6 @@ io.on('connection', async (socket) => {
           // Send result to client (including the target location)
           socket.emit('click_result', { 
             distance: roundedDistance,
-            targetX: targetPixel.x,
-            targetY: targetPixel.y,
             success: false
           });
           
