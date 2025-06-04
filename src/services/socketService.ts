@@ -135,7 +135,7 @@ export const registerClick = (x: number, y: number): void => {
   if (socket?.connected) {
     socket.emit('click', { x, y });
   } else {
-    console.error('Cannot register click: socket not connected');
+    console.error('Socket not connected. Queuing click to send upon reconnection.');
     // Queue for when connection is restored
     const onceConnected = (status: boolean) => {
       if (status) {
@@ -154,8 +154,13 @@ export const registerClick = (x: number, y: number): void => {
 // Check if today's click is already registered
 export const checkTodaysClick = (): boolean => {
   const todayKey = formatDateKey(new Date());
-  const attemptData = localStorage.getItem(`click_attempt_${todayKey}`);
-  return attemptData !== null;
+  try {
+    const attemptData = localStorage.getItem(`click_attempt_${todayKey}`);
+    return attemptData !== null;
+  } catch (error) {
+    console.error("Error reading from localStorage in checkTodaysClick:", error);
+    return false; // Indicate failure to check or no data
+  }
 };
 
 // Cleanup function

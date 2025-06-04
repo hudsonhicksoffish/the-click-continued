@@ -9,7 +9,7 @@ const Header = () => {
     <header className="py-4">
       <div className="container mx-auto px-4 flex items-center justify-between">
         <div className="flex-1">
-          <button className="text-white">
+          <button className="text-white" aria-label="Open menu">
             <span className="text-2xl">☰</span>
           </button>
         </div>
