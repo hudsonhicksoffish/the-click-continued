@@ -19,12 +19,14 @@ const PixelatedX = () => {
   
   return (
     <div 
-      className="inline-block mx-2 relative" 
+      className="inline-block mx-1" 
       style={{ 
         width: `${width}px`, 
         height: `${height}px`,
-        transform: 'translateY(-1px)' // Small alignment adjustment
+        position: 'relative',
+        top: '1px' // Small alignment adjustment
       }}
+      aria-label="Pixelated X"
     >
       {pattern.map((row, y) => 
         row.map((pixel, x) => 
