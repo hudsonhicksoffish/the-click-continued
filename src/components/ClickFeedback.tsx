@@ -192,20 +192,7 @@ const ClickFeedback = () => {
           setShowShareModal(false);
         }).catch((fileShareError) => {
           console.error('File sharing failed:', fileShareError);
-          // Try text-only sharing
-          if (navigator.share) {
-            return navigator.share({
-              title: 'The Click - Daily Pixel Challenge',
-              text: generateShareText(),
-              url: 'https://theclickgame.com'
-            });
-          }
-          throw new Error('Text sharing not available');
-        }).then(() => {
-          setShowShareModal(false);
-        }).catch((textShareError) => {
-          console.error('Text sharing failed:', textShareError);
-          // Fall through to platform options
+          // Directly show platform options instead of trying text-only sharing
           setShowPlatformOptions(true);
         });
       } else if (navigator.share) {
