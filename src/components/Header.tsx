@@ -24,7 +24,7 @@ const PixelatedX = () => {
         width: `${width}px`, 
         height: `${height}px`,
         position: 'relative',
-        top: '1px' // Small alignment adjustment
+        bottom: '-4px' // Adjusted to align with the bottom of THE and CLICK
       }}
       aria-label="Pixelated X"
     >
