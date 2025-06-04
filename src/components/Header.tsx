@@ -17,7 +17,8 @@ const Header = () => {
         <div className="flex-1 flex flex-col items-center justify-center">
           <div className="text-4xl font-bold text-white flex items-center">
             <span>THE</span>
-            <span className="ml-2">CLIC<span className="text-[#FF0000]">X</span></span>
+            <span className="mx-2 text-[#FF0000]">x</span>
+            <span>CLICK</span>
           </div>
           <p className="text-sm text-white mt-1">One shot. Every day. Jackpot.</p>
         </div>
