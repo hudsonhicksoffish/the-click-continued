@@ -19,12 +19,12 @@ const PixelatedX = () => {
   
   return (
     <div 
-      className="inline-block mx-1" 
+      className="inline-block" 
       style={{ 
         width: `${width}px`, 
         height: `${height}px`,
         position: 'relative',
-        bottom: '-4px', // Adjusted to align with the bottom of THE and CLICK
+        bottom: '-4px', // Aligned with the bottom of THE and CLICK
         marginLeft: '2px' // Shift right by 2 pixels
       }}
       aria-label="Pixelated X"
