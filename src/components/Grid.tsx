@@ -94,8 +94,11 @@ const Grid = ({ disabled = false }: GridProps) => {
       drawSeeYouTomorrow(ctx, displayWidth, displayHeight);
       
       // Draw user's click marker
-      const normalizedX = (lastClick.x / 1000) * displayWidth;
-      const normalizedY = (lastClick.y / 1000) * displayHeight;
+      const borderWidth = 3;
+      const gameAreaWidth = displayWidth - borderWidth;
+      const gameAreaHeight = displayHeight - borderWidth;
+      const normalizedX = (lastClick.x / 1000) * gameAreaWidth + borderWidth / 2;
+      const normalizedY = (lastClick.y / 1000) * gameAreaHeight + borderWidth / 2;
       
       drawPixelatedX(ctx, normalizedX, normalizedY, '#FF0000');
     }
@@ -285,12 +288,26 @@ const Grid = ({ disabled = false }: GridProps) => {
     const rect = canvas.getBoundingClientRect();
     
     // Get click position relative to canvas
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const rawX = e.clientX - rect.left;
+    const rawY = e.clientY - rect.top;
+    
+    // Account for the border (3px border with 1.5px offset)
+    const borderWidth = 3;
+    const clickableWidth = rect.width - borderWidth;
+    const clickableHeight = rect.height - borderWidth;
+    
+    // Adjust coordinates to exclude border area
+    const x = rawX - borderWidth / 2;
+    const y = rawY - borderWidth / 2;
+    
+    // Check if click is within the actual game area (excluding border)
+    if (x < 0 || y < 0 || x >= clickableWidth || y >= clickableHeight) {
+      return; // Click was on the border, ignore it
+    }
     
     // Convert to 0-1000 range
-    const gridX = Math.floor((x / rect.width) * 1000);
-    const gridY = Math.floor((y / rect.height) * 1000);
+    const gridX = Math.floor((x / clickableWidth) * 1000);
+    const gridY = Math.floor((y / clickableHeight) * 1000);
     
     // If in dev mode and already clicked, reset state first
     if (devMode && hasClicked) {
