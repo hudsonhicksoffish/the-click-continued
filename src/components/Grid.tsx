@@ -85,8 +85,8 @@ const Grid = ({ disabled = false }: GridProps) => {
     
     // Draw border - ALWAYS draw the border regardless of click state
     ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, displayWidth - 2, displayHeight - 2);
+    ctx.lineWidth = 3;
+    ctx.strokeRect(1.5, 1.5, displayWidth - 3, displayHeight - 3);
     
     // If user has clicked, draw the post-click state
     if (hasClicked && lastClick) {
