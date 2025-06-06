@@ -98,7 +98,7 @@ const Grid = ({ disabled = false }: GridProps) => {
     // Draw border LAST so it's on top and outside the game area
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 3;
-    ctx.strokeRect(1.5, 1.5, displayWidth - 3, displayHeight - 3);
+    ctx.strokeRect(-2.5, -2.5, displayWidth + 5, displayHeight + 5);
     
     // If target is revealed, draw target marker
     // if (revealedTargetPixel) { // Logic removed
