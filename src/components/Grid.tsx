@@ -57,7 +57,7 @@ const Grid = ({ disabled = false }: GridProps) => {
   // Redraw canvas when game state changes
   useEffect(() => {
     drawCanvas();
-  }, [hasClicked, lastClick, disabled]);
+  }, [hasClicked, lastClick, disabled, gridSize]);
 
   // Reset canvas for dev mode when double-clicked
   const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
