@@ -75,17 +75,6 @@ const Grid = ({ disabled = false }: GridProps) => {
     }
   }, [hasClicked, lastClick]);
 
-  // Redraw canvas when share card is closed
-  useEffect(() => {
-    if (!showShareCard && hasClicked && lastClick && gridSize.width > 0) {
-      // Small delay to ensure DOM is updated
-      const timer = setTimeout(() => {
-        drawCanvas();
-      }, 10);
-      return () => clearTimeout(timer);
-    }
-  }, [showShareCard, hasClicked]);
-
   // Reset canvas for dev mode when double-clicked
   const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (devMode && hasClicked) {
@@ -228,47 +217,49 @@ const Grid = ({ disabled = false }: GridProps) => {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Show share card instead of canvas when appropriate */}
-      {showShareCard && hasClicked && lastClick ? (
-        <div className="w-full aspect-square flex items-center justify-center">
-          <ShareCard onClose={handleCloseShareCard} />
+      {/* Canvas container with relative positioning for overlay */}
+      <div className="relative w-full aspect-square">
+        {/* Canvas - always rendered */}
+        <canvas 
+          ref={canvasRef}
+          onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
+          className={`w-full h-full ${
+            disabled ? 'opacity-75 cursor-not-allowed' : hasClicked && !devMode ? 'cursor-default' : 'cursor-pointer'
+          }`}
+        />
+        
+        {/* Share card overlay - positioned absolutely on top */}
+        {showShareCard && hasClicked && lastClick && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-90">
+            <ShareCard onClose={handleCloseShareCard} />
+          </div>
+        )}
+      </div>
+      
+      {/* Show distance feedback when clicked and share card is not showing */}
+      {hasClicked && lastClick && !showShareCard && (
+        <div className="text-center mt-6">
+          <h2 className={`text-2xl font-bold ${colorClass} mb-2`}>
+            {Math.round(lastClick.distance)} PIXELS AWAY
+          </h2>
+          <p className={`${colorClass} font-medium`}>{feedbackMessage}</p>
         </div>
-      ) : (
+      )}
+      
+      {/* Only show helper text when canvas is visible and not clicked */}
+      {!hasClicked && (
         <>
-          <canvas 
-            ref={canvasRef}
-            onClick={handleClick}
-            onDoubleClick={handleDoubleClick}
-            className={`w-full aspect-square ${
-              disabled ? 'opacity-75 cursor-not-allowed' : hasClicked && !devMode ? 'cursor-default' : 'cursor-pointer'
-            }`}
-          />
-          
-          {/* Show distance feedback when clicked and share card is not showing */}
-          {hasClicked && lastClick && (
-            <div className="text-center mt-6">
-              <h2 className={`text-2xl font-bold ${colorClass} mb-2`}>
-                {Math.round(lastClick.distance)} PIXELS AWAY
-              </h2>
-              <p className={`${colorClass} font-medium`}>{feedbackMessage}</p>
+          {devMode && (
+            <div className="text-xs text-[#FF0000] mt-2 text-center">
+              Developer mode: Unlimited attempts enabled
             </div>
           )}
           
-          {/* Only show helper text when canvas is visible and not clicked */}
-          {!hasClicked && (
-            <>
-              {devMode && (
-                <div className="text-xs text-[#FF0000] mt-2 text-center">
-                  Developer mode: Unlimited attempts enabled
-                </div>
-              )}
-              
-              {!devMode && (
-                <div className="text-xs text-gray-400 mt-2 text-center">
-                  One attempt per day. Choose wisely!
-                </div>
-              )}
-            </>
+          {!devMode && (
+            <div className="text-xs text-gray-400 mt-2 text-center">
+              One attempt per day. Choose wisely!
+            </div>
           )}
         </>
       )}
