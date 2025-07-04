@@ -100,8 +100,11 @@ const Grid = ({ disabled = false }: GridProps) => {
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, displayWidth, displayHeight);
     
-    // If user has clicked, draw only the click marker
+    // If user has clicked, draw the post-click state
     if (hasClicked && lastClick) {
+      // Draw "SEE YOU TMRW" pixel art - Draw this first so it doesn't cover the click marker
+      drawSeeYouTomorrow(ctx, displayWidth, displayHeight);
+      
       // Draw user's click marker
       const normalizedX = (lastClick.x / 1000) * displayWidth;
       const normalizedY = (lastClick.y / 1000) * displayHeight;
@@ -151,6 +154,137 @@ const Grid = ({ disabled = false }: GridProps) => {
     }
   };
   
+  // Draw "SEE YOU TMRW" pixel art - redesigned to fill more of the canvas and separate into three lines
+  const drawSeeYouTomorrow = (
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number
+  ) => {
+    // Define pixel art for "SEE" text (first line)
+    const seePixelArt = [
+      [1,1,1,0,1,1,1,0,1,1,1],
+      [1,0,0,0,1,0,0,0,1,0,0],
+      [1,0,0,0,1,0,0,0,1,0,0],
+      [0,1,1,0,1,1,1,0,1,1,1],
+      [0,0,0,1,1,0,0,0,1,0,0],
+      [1,0,0,0,1,0,0,0,1,0,0],
+      [0,1,1,1,1,1,1,0,1,1,1]
+    ];
+    
+    // Define pixel art for "YOU" text (second line)
+    const youPixelArt = [
+      [1,0,0,0,1,0,0,1,1,1],
+      [1,0,0,0,1,0,0,1,0,1],
+      [1,0,0,0,1,0,0,1,0,1],
+      [0,1,0,1,0,0,0,1,0,1],
+      [0,1,0,1,0,0,0,1,0,1],
+      [0,0,1,0,0,0,0,1,0,1],
+      [0,0,1,0,0,0,0,1,1,1]
+    ];
+    
+    // Define pixel art for "TMRW" text (third line)
+    const tmrwPixelArt = [
+      [1,1,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1],
+      [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1],
+      [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1],
+      [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1],
+      [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1],
+      [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1],
+      [0,1,0,0,1,1,1,0,0,1,0,0,0,1,1,1,0]
+    ];
+    
+    // Calculate the maximum width of the three lines
+    const maxLineWidth = Math.max(
+      seePixelArt[0].length,
+      youPixelArt[0].length,
+      tmrwPixelArt[0].length
+    );
+    
+    // Calculate dynamic pixel size based on canvas width
+    const pixelSize = Math.max(4, Math.floor(width / (maxLineWidth * 1.5))); // Ensure minimum pixel size
+    
+    // Calculate total height of all three lines with spacing
+    const lineSpacing = pixelSize * 2; // Space between lines
+    const totalHeight = (seePixelArt.length + youPixelArt.length + tmrwPixelArt.length) * pixelSize + lineSpacing * 2;
+    
+    // Calculate start positions to center all lines
+    const startY = (height - totalHeight) / 2;
+    
+    // Draw darker background for all pixel art
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(
+      0, 
+      startY - pixelSize,
+      width,
+      totalHeight + pixelSize * 2
+    );
+    
+    // Draw the "SEE" pixel art (first line)
+    const seeWidth = seePixelArt[0].length * pixelSize;
+    const seeStartX = (width - seeWidth) / 2;
+    const seeStartY = startY;
+    
+    ctx.fillStyle = '#222222'; // Dark gray for the text
+    
+    for (let y = 0; y < seePixelArt.length; y++) {
+      for (let x = 0; x < seePixelArt[y].length; x++) {
+        if (seePixelArt[y][x] === 1) {
+          // Special color for X in "SEE"
+          const isRedPixel = x === 6 && y >= 0 && y <= 6;
+          
+          ctx.fillStyle = isRedPixel ? '#FF0000' : '#222222';
+          
+          ctx.fillRect(
+            seeStartX + x * pixelSize, 
+            seeStartY + y * pixelSize, 
+            pixelSize, 
+            pixelSize
+          );
+        }
+      }
+    }
+    
+    // Draw the "YOU" pixel art (second line)
+    const youWidth = youPixelArt[0].length * pixelSize;
+    const youStartX = (width - youWidth) / 2;
+    const youStartY = seeStartY + seePixelArt.length * pixelSize + lineSpacing;
+    
+    ctx.fillStyle = '#222222'; // Reset color
+    
+    for (let y = 0; y < youPixelArt.length; y++) {
+      for (let x = 0; x < youPixelArt[y].length; x++) {
+        if (youPixelArt[y][x] === 1) {
+          ctx.fillRect(
+            youStartX + x * pixelSize, 
+            youStartY + y * pixelSize, 
+            pixelSize, 
+            pixelSize
+          );
+        }
+      }
+    }
+    
+    // Draw the "TMRW" pixel art (third line)
+    const tmrwWidth = tmrwPixelArt[0].length * pixelSize;
+    const tmrwStartX = (width - tmrwWidth) / 2;
+    const tmrwStartY = youStartY + youPixelArt.length * pixelSize + lineSpacing;
+    
+    ctx.fillStyle = '#222222'; // Reset color
+    
+    for (let y = 0; y < tmrwPixelArt.length; y++) {
+      for (let x = 0; x < tmrwPixelArt[y].length; x++) {
+        if (tmrwPixelArt[y][x] === 1) {
+          ctx.fillRect(
+            tmrwStartX + x * pixelSize, 
+            tmrwStartY + y * pixelSize, 
+            pixelSize, 
+            pixelSize
+          );
+        }
+      }
+    }
+  };
+  
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (disabled || (hasClicked && !devMode)) return;
     
@@ -181,8 +315,36 @@ const Grid = ({ disabled = false }: GridProps) => {
     setShowShareCard(false);
   };
 
+  // Determine feedback message based on distance
+  let feedbackMessage = '';
+  let colorClass = '';
+  
+  if (hasClicked && lastClick) {
+    const { distance } = lastClick;
+    
+    if (distance === 0) {
+      feedbackMessage = 'JACKPOT! You found the exact pixel!';
+      colorClass = 'text-yellow-400';
+    } else if (distance < 5) {
+      feedbackMessage = 'Incredibly close!';
+      colorClass = 'text-emerald-400';
+    } else if (distance < 20) {
+      feedbackMessage = 'Very close!';
+      colorClass = 'text-emerald-500';
+    } else if (distance < 50) {
+      feedbackMessage = 'Getting closer!';
+      colorClass = 'text-blue-400';
+    } else if (distance < 100) {
+      feedbackMessage = 'Not bad!';
+      colorClass = 'text-blue-500';
+    } else {
+      feedbackMessage = 'Try again tomorrow!';
+      colorClass = 'text-gray-400';
+    }
+  }
+
   return (
-    <div className="w-full max-w-md mx-auto relative">
+    <div className="w-full max-w-md mx-auto">
       {/* Show share card instead of canvas when appropriate */}
       {showShareCard && hasClicked && lastClick ? (
         <div className="w-full aspect-square flex items-center justify-center">
@@ -198,6 +360,16 @@ const Grid = ({ disabled = false }: GridProps) => {
               disabled ? 'opacity-75 cursor-not-allowed' : hasClicked && !devMode ? 'cursor-default' : 'cursor-pointer'
             }`}
           />
+          
+          {/* Show distance feedback when clicked and share card is not showing */}
+          {hasClicked && lastClick && (
+            <div className="text-center mt-6">
+              <h2 className={`text-2xl font-bold ${colorClass} mb-2`}>
+                {Math.round(lastClick.distance)} PIXELS AWAY
+              </h2>
+              <p className={`${colorClass} font-medium`}>{feedbackMessage}</p>
+            </div>
+          )}
           
           {/* Only show helper text when canvas is visible and not clicked */}
           {!hasClicked && (
