@@ -7,7 +7,7 @@ interface GridProps {
 }
 
 const Grid = ({ disabled = false }: GridProps) => {
-  const { registerClick, hasClicked, lastClick, revealedTargetPixel, setHasClicked, devMode } = useGameContext();
+  const { registerClick, hasClicked, lastClick, setHasClicked, devMode } = useGameContext();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
   const [showShareCard, setShowShareCard] = useState(false);
@@ -183,20 +183,20 @@ const Grid = ({ disabled = false }: GridProps) => {
 
   return (
     <div className="w-full max-w-md mx-auto relative">
-      <canvas 
-        ref={canvasRef}
-        onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
-        className={`w-full aspect-square ${
-          disabled ? 'opacity-75 cursor-not-allowed' : hasClicked && !devMode ? 'cursor-default' : 'cursor-pointer'
-        }`}
-      />
-      
-      {/* Share card overlay */}
-      {showShareCard && hasClicked && lastClick && (
-        <div className="absolute inset-0 flex items-center justify-center">
+      {/* Show share card instead of canvas when appropriate */}
+      {showShareCard && hasClicked && lastClick ? (
+        <div className="w-full aspect-square flex items-center justify-center bg-black border-2 border-white rounded-sm">
           <ShareCard onClose={handleCloseShareCard} />
         </div>
+      ) : (
+        <canvas 
+          ref={canvasRef}
+          onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
+          className={`w-full aspect-square ${
+            disabled ? 'opacity-75 cursor-not-allowed' : hasClicked && !devMode ? 'cursor-default' : 'cursor-pointer'
+          }`}
+        />
       )}
       
       {devMode && (

@@ -36,32 +36,32 @@ const ShareCard = ({ onClose }: ShareCardProps) => {
     if (!ctx) return;
     
     // Canvas width is fixed
-    const width = 400;
+    const width = 500;
     
     // Vertical spacing constant
-    const verticalSpacing = 16;
+    const verticalSpacing = 20;
     
     // First set canvas width
     canvas.width = width;
     
     // Define vertical positions dynamically
     // Title position
-    const titleY = 30;
+    const titleY = 40;
     
     // Grid parameters
-    const gridSize = 160;
+    const gridSize = 200;
     const gridX = (width - gridSize) / 2;
-    const gridY = titleY + 25; // Position after title
+    const gridY = titleY + 30; // Position after title
     
     // Calculate positions for text elements after the grid
-    const distanceTextY = gridY + gridSize + verticalSpacing * 1.5;
-    const jackpotTextY = distanceTextY + verticalSpacing * 1.5;
+    const distanceTextY = gridY + gridSize + verticalSpacing * 2;
+    const jackpotTextY = distanceTextY + verticalSpacing * 2;
     
     // Website URL is positioned with enough space after jackpot
-    const websiteTextY = jackpotTextY + verticalSpacing * 1.5;
+    const websiteTextY = jackpotTextY + verticalSpacing * 2;
     
     // Calculate total canvas height with padding at the bottom
-    const totalHeight = websiteTextY + verticalSpacing * 1.5;
+    const totalHeight = websiteTextY + verticalSpacing * 2;
     
     // Set canvas height
     canvas.height = totalHeight;
@@ -72,7 +72,7 @@ const ShareCard = ({ onClose }: ShareCardProps) => {
     
     // Title
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px Inter, sans-serif';
+    ctx.font = 'bold 24px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(`THE CLICK: DAY ${dayNumber}`, width / 2, titleY);
@@ -96,12 +96,12 @@ const ShareCard = ({ onClose }: ShareCardProps) => {
     
     ctx.fillStyle = '#FF0000'; // Red X to match theme
     ctx.beginPath();
-    ctx.arc(markerX, markerY, 6, 0, Math.PI * 2);
+    ctx.arc(markerX, markerY, 8, 0, Math.PI * 2);
     ctx.fill();
     
     // Draw X in marker
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 10px Inter, sans-serif';
+    ctx.font = 'bold 12px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('X', markerX, markerY);
@@ -112,7 +112,7 @@ const ShareCard = ({ onClose }: ShareCardProps) => {
     // Distance info
     const formattedDistance = Math.round(lastClick.distance);
     ctx.fillStyle = '#ffffff';
-    ctx.font = '16px Inter, sans-serif';
+    ctx.font = '20px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(`Distance: ${formattedDistance}px`, width / 2, distanceTextY);
     
@@ -125,7 +125,7 @@ const ShareCard = ({ onClose }: ShareCardProps) => {
     
     // Website URL
     ctx.fillStyle = '#FF0000'; // Red to match theme
-    ctx.font = '14px Inter, sans-serif';
+    ctx.font = '18px Inter, sans-serif';
     ctx.fillText('theclickgame.com', width / 2, websiteTextY);
     
     // Convert to data URL
@@ -146,6 +146,30 @@ const ShareCard = ({ onClose }: ShareCardProps) => {
 
   const { distance } = lastClick;
   const formattedDistance = Math.round(distance);
+  
+  // Determine feedback message and color based on distance
+  let feedbackMessage = '';
+  let colorClass = '';
+  
+  if (distance === 0) {
+    feedbackMessage = 'JACKPOT! You found the exact pixel!';
+    colorClass = 'text-yellow-400';
+  } else if (distance < 5) {
+    feedbackMessage = 'Incredibly close!';
+    colorClass = 'text-emerald-400';
+  } else if (distance < 20) {
+    feedbackMessage = 'Very close!';
+    colorClass = 'text-emerald-500';
+  } else if (distance < 50) {
+    feedbackMessage = 'Getting closer!';
+    colorClass = 'text-blue-400';
+  } else if (distance < 100) {
+    feedbackMessage = 'Not bad!';
+    colorClass = 'text-blue-500';
+  } else {
+    feedbackMessage = 'Try again tomorrow!';
+    colorClass = 'text-gray-400';
+  }
   
   // Utility function to convert data URL to Blob synchronously
   const dataURLtoBlob = (dataURL: string) => {
@@ -278,22 +302,16 @@ const ShareCard = ({ onClose }: ShareCardProps) => {
   };
 
   return (
-    <div className="bg-[#111111] rounded-lg p-4 max-w-xs w-full border border-[#333333] shadow-2xl">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold text-white">
-          {formattedDistance} pixels away
+    <div className="bg-[#111111] rounded-lg p-6 w-full max-w-sm mx-auto border border-[#333333] shadow-2xl">
+      <div className="text-center mb-4">
+        <h2 className={`text-3xl font-bold ${colorClass} mb-2`}>
+          {formattedDistance} PIXELS AWAY
         </h2>
-        <button 
-          onClick={onClose}
-          className="text-gray-400 hover:text-[#FF0000] transition-colors p-1 rounded-full hover:bg-[#222222]"
-          aria-label="Close sharing dialog"
-        >
-          <X size={16} />
-        </button>
+        <p className={`${colorClass} font-medium text-lg`}>{feedbackMessage}</p>
       </div>
       
       {shareImage && (
-        <div className="mb-3 flex justify-center">
+        <div className="mb-4 flex justify-center">
           <img 
             src={shareImage} 
             alt="Your click result" 
@@ -310,81 +328,109 @@ const ShareCard = ({ onClose }: ShareCardProps) => {
       />
       
       {!showPlatformOptions ? (
-        <div className="flex gap-2 flex-wrap">
+        <div className="space-y-3">
           <button 
             onClick={handleShare}
-            className="flex-1 bg-[#FF0000] hover:bg-red-700 text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center text-sm"
+            className="w-full bg-[#FF0000] hover:bg-red-700 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center font-medium"
             aria-label="Share to platforms"
           >
-            <Share2 className="h-3 w-3 mr-1" />
-            Share
+            <Share2 className="h-5 w-5 mr-2" />
+            Share Result
           </button>
           
-          <button 
-            onClick={saveImage}
-            className="flex-1 bg-[#222222] hover:bg-[#333333] text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center text-sm"
-            aria-label="Save image"
-          >
-            <Copy className="h-3 w-3 mr-1" />
-            Save
-          </button>
+          <div className="flex gap-3">
+            <button 
+              onClick={saveImage}
+              className="flex-1 bg-[#222222] hover:bg-[#333333] text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+              aria-label="Save image"
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Save Image
+            </button>
+            
+            <button 
+              onClick={onClose}
+              className="flex-1 bg-[#333333] hover:bg-[#444444] text-white py-2 px-4 rounded-lg transition-colors"
+              aria-label="Close sharing dialog"
+            >
+              Close
+            </button>
+          </div>
         </div>
       ) : (
         <div>
-          <h3 className="text-xs text-gray-300 mb-2">Share via:</h3>
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          <h3 className="text-sm text-gray-300 mb-3 text-center">Share via:</h3>
+          <div className="grid grid-cols-2 gap-3 mb-4">
             <button 
               onClick={shareToTwitter}
-              className="bg-[#222222] hover:bg-[#1DA1F2] text-white py-2 px-2 rounded-lg transition-colors flex items-center text-xs"
+              className="bg-[#222222] hover:bg-[#1DA1F2] text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center"
               aria-label="Share to Twitter"
             >
-              <Twitter className="h-3 w-3 mr-1" />
-              X
+              <Twitter className="h-4 w-4 mr-2" />
+              X (Twitter)
             </button>
             
             <button 
               onClick={shareToFacebook}
-              className="bg-[#222222] hover:bg-[#1877F2] text-white py-2 px-2 rounded-lg transition-colors flex items-center text-xs"
+              className="bg-[#222222] hover:bg-[#1877F2] text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center"
               aria-label="Share to Facebook"
             >
-              <Facebook className="h-3 w-3 mr-1" />
-              FB
+              <Facebook className="h-4 w-4 mr-2" />
+              Facebook
             </button>
             
             <button 
               onClick={shareToLinkedIn}
-              className="bg-[#222222] hover:bg-[#0A66C2] text-white py-2 px-2 rounded-lg transition-colors flex items-center text-xs"
+              className="bg-[#222222] hover:bg-[#0A66C2] text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center"
               aria-label="Share to LinkedIn"
             >
-              <Linkedin className="h-3 w-3 mr-1" />
-              LI
+              <Linkedin className="h-4 w-4 mr-2" />
+              LinkedIn
             </button>
             
             <button 
               onClick={shareViaEmail}
-              className="bg-[#222222] hover:bg-[#333333] text-white py-2 px-2 rounded-lg transition-colors flex items-center text-xs"
+              className="bg-[#222222] hover:bg-[#333333] text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center"
               aria-label="Share via Email"
             >
-              <Mail className="h-3 w-3 mr-1" />
+              <Mail className="h-4 w-4 mr-2" />
               Email
+            </button>
+            
+            <button 
+              onClick={shareToDiscord}
+              className="bg-[#222222] hover:bg-[#5865F2] text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center"
+              aria-label="Share to Discord"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Discord
+            </button>
+            
+            <button 
+              onClick={shareToSlack}
+              className="bg-[#222222] hover:bg-[#4A154B] text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center"
+              aria-label="Share to Slack"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Slack
             </button>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button 
               onClick={saveImage}
-              className={`flex-1 bg-[#222222] hover:bg-[#333333] text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center text-xs ${
+              className={`flex-1 bg-[#222222] hover:bg-[#333333] text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center ${
                 copySuccess ? 'bg-[#FF0000]' : ''
               }`}
               aria-label="Save image"
             >
-              <Copy className="h-3 w-3 mr-1" />
-              {copySuccess ? 'Saved!' : 'Save'}
+              <Copy className="h-4 w-4 mr-2" />
+              {copySuccess ? 'Saved!' : 'Save Image'}
             </button>
             
             <button 
               onClick={() => setShowPlatformOptions(false)}
-              className="bg-[#333333] hover:bg-[#444444] text-white py-2 px-3 rounded-lg transition-colors text-xs"
+              className="bg-[#333333] hover:bg-[#444444] text-white py-2 px-4 rounded-lg transition-colors"
               aria-label="Go back"
             >
               Back
