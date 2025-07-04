@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useGameContext } from '../contexts/GameContext';
+import ShareCard from './ShareCard';
 
 interface GridProps {
   disabled?: boolean;
@@ -9,6 +10,7 @@ const Grid = ({ disabled = false }: GridProps) => {
   const { registerClick, hasClicked, lastClick, revealedTargetPixel, setHasClicked, devMode } = useGameContext();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
+  const [showShareCard, setShowShareCard] = useState(false);
   
   // Setup and resize canvas
   useEffect(() => {
@@ -59,11 +61,26 @@ const Grid = ({ disabled = false }: GridProps) => {
     drawCanvas();
   }, [hasClicked, lastClick, disabled, gridSize]);
 
+  // Show share card automatically after unsuccessful click
+  useEffect(() => {
+    if (hasClicked && lastClick && lastClick.distance !== -1) {
+      // Check if it was unsuccessful (distance > 0)
+      if (lastClick.distance > 0) {
+        // Small delay to let the click marker render first
+        const timer = setTimeout(() => {
+          setShowShareCard(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [hasClicked, lastClick]);
+
   // Reset canvas for dev mode when double-clicked
   const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (devMode && hasClicked) {
       e.preventDefault();
       setHasClicked(false);
+      setShowShareCard(false);
       drawCanvas();
     }
   };
@@ -153,14 +170,19 @@ const Grid = ({ disabled = false }: GridProps) => {
     // If in dev mode and already clicked, reset state first
     if (devMode && hasClicked) {
       setHasClicked(false);
+      setShowShareCard(false);
     }
     
     // Register click
     registerClick(gridX, gridY);
   };
 
+  const handleCloseShareCard = () => {
+    setShowShareCard(false);
+  };
+
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto relative">
       <canvas 
         ref={canvasRef}
         onClick={handleClick}
@@ -169,6 +191,13 @@ const Grid = ({ disabled = false }: GridProps) => {
           disabled ? 'opacity-75 cursor-not-allowed' : hasClicked && !devMode ? 'cursor-default' : 'cursor-pointer'
         }`}
       />
+      
+      {/* Share card overlay */}
+      {showShareCard && hasClicked && lastClick && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <ShareCard onClose={handleCloseShareCard} />
+        </div>
+      )}
       
       {devMode && (
         <div className="text-xs text-[#FF0000] mt-2 text-center">
