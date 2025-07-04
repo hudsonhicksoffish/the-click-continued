@@ -75,6 +75,17 @@ const Grid = ({ disabled = false }: GridProps) => {
     }
   }, [hasClicked, lastClick]);
 
+  // Redraw canvas when share card is closed
+  useEffect(() => {
+    if (!showShareCard && hasClicked) {
+      // Small delay to ensure DOM is updated
+      const timer = setTimeout(() => {
+        drawCanvas();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [showShareCard, hasClicked]);
+
   // Reset canvas for dev mode when double-clicked
   const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (devMode && hasClicked) {
