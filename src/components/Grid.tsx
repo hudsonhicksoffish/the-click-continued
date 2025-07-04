@@ -99,13 +99,18 @@ const Grid = ({ disabled = false }: GridProps) => {
   // Draw the canvas based on game state
   const drawCanvas = () => {
     const canvas = canvasRef.current;
-    if (!canvas || gridSize.width === 0 || gridSize.height === 0) return;
+    if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    const displayWidth = gridSize.width;
-    const displayHeight = gridSize.height;
+    // Get actual canvas display size
+    const rect = canvas.getBoundingClientRect();
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    
+    // If no size yet, skip drawing
+    if (displayWidth === 0 || displayHeight === 0) return;
     
     // Clear canvas
     ctx.clearRect(0, 0, displayWidth, displayHeight);
@@ -113,7 +118,7 @@ const Grid = ({ disabled = false }: GridProps) => {
     ctx.fillRect(0, 0, displayWidth, displayHeight);
     
     // If user has clicked, draw the post-click state
-    if (hasClicked && lastClick && lastClick.distance !== -1) {
+    if (hasClicked && lastClick) {
       // Draw user's click marker
       const normalizedX = (lastClick.x / 1000) * displayWidth;
       const normalizedY = (lastClick.y / 1000) * displayHeight;
