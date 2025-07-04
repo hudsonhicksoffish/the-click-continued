@@ -3,12 +3,11 @@ import { GameProvider, useGameContext } from './contexts/GameContext';
 import Header from './components/Header';
 import Grid from './components/Grid';
 import JackpotDisplay from './components/JackpotDisplay';
-import ClickFeedback from './components/ClickFeedback';
 import { formatDateKey, getTimeUntilTomorrow } from './utils/dateUtils';
 
 // Define MainApp component to consume the context
 function MainApp() {
-  const { devMode, setHasClicked } = useGameContext(); // Consume devMode and setHasClicked for resetting
+  const { devMode, setHasClicked, hasClicked } = useGameContext();
   const [hasAttemptedToday, setHasAttemptedToday] = useState<boolean>(false);
   const [timeUntilTomorrow, setTimeUntilTomorrow] = useState(getTimeUntilTomorrow());
 
@@ -23,13 +22,11 @@ function MainApp() {
         }
       } catch (error) {
         console.error("Error reading from localStorage:", error);
-        // Optionally, set a state to show an error to the user
       }
     } else {
-      // If in dev mode, ensure hasAttemptedToday is false initially or based on context if needed
       setHasAttemptedToday(false);
     }
-  }, [devMode]); // Re-run if devMode changes
+  }, [devMode]);
 
   // Update countdown timer
   useEffect(() => {
@@ -47,11 +44,9 @@ function MainApp() {
       try {
         localStorage.removeItem(`click_attempt_${todayKey}`);
         setHasAttemptedToday(false);
-        // Also reset hasClicked in GameContext for dev mode
         setHasClicked(false);
       } catch (error) {
         console.error("Error removing item from localStorage:", error);
-        // Optionally, set a state to show an error to the user
       }
     }
   };
@@ -61,12 +56,12 @@ function MainApp() {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8 flex flex-col items-center justify-center">
         <JackpotDisplay />
-        <ClickFeedback />
-        {/* Grid disabled logic now uses context's devMode */}
+        
+        {/* Only show Grid - it handles its own post-click state */}
         <Grid disabled={devMode ? false : hasAttemptedToday} />
 
-        {/* Countdown Timer - Moved from JackpotDisplay */}
-        {hasAttemptedToday && !devMode && ( // Also hide countdown if in dev mode and attempt is reset
+        {/* Countdown Timer - Only show if clicked and not in dev mode and not showing share card */}
+        {hasAttemptedToday && !devMode && !hasClicked && (
           <div className="mt-8 mb-4">
             <div className="text-gray-400 text-xl mb-2">Next click in:</div>
             <div className="flex items-center justify-center text-white text-5xl font-mono">
