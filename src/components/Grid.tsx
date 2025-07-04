@@ -84,7 +84,7 @@ const Grid = ({ disabled = false }: GridProps) => {
       }, 50);
       return () => clearTimeout(timer);
     }
-  }, [showShareCard, hasClicked]);
+  }, [showShareCard, hasClicked, lastClick, gridSize]);
 
   // Reset canvas for dev mode when double-clicked
   const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
