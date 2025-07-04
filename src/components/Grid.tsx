@@ -77,14 +77,14 @@ const Grid = ({ disabled = false }: GridProps) => {
 
   // Redraw canvas when share card is closed
   useEffect(() => {
-    if (!showShareCard && hasClicked) {
+    if (!showShareCard && hasClicked && lastClick && gridSize.width > 0) {
       // Small delay to ensure DOM is updated
       const timer = setTimeout(() => {
         drawCanvas();
-      }, 50);
+      }, 10);
       return () => clearTimeout(timer);
     }
-  }, [showShareCard, hasClicked, lastClick, gridSize]);
+  }, [showShareCard, hasClicked]);
 
   // Reset canvas for dev mode when double-clicked
   const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -99,7 +99,7 @@ const Grid = ({ disabled = false }: GridProps) => {
   // Draw the canvas based on game state
   const drawCanvas = () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || gridSize.width === 0 || gridSize.height === 0) return;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -107,15 +107,13 @@ const Grid = ({ disabled = false }: GridProps) => {
     const displayWidth = gridSize.width;
     const displayHeight = gridSize.height;
     
-    // Don't draw anything if gridSize is not set yet
-    if (displayWidth === 0 || displayHeight === 0) return;
-    
     // Clear canvas
+    ctx.clearRect(0, 0, displayWidth, displayHeight);
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, displayWidth, displayHeight);
     
     // If user has clicked, draw the post-click state
-    if (hasClicked && lastClick) {
+    if (hasClicked && lastClick && lastClick.distance !== -1) {
       // Draw user's click marker
       const normalizedX = (lastClick.x / 1000) * displayWidth;
       const normalizedY = (lastClick.y / 1000) * displayHeight;
@@ -123,7 +121,7 @@ const Grid = ({ disabled = false }: GridProps) => {
       drawPixelatedX(ctx, normalizedX, normalizedY, '#FF0000');
     }
     
-    // Draw border LAST so it's on top and outside the game area
+    // Always draw the white border
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 3;
     ctx.strokeRect(1.5, 1.5, displayWidth - 3, displayHeight - 3);
