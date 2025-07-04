@@ -60,8 +60,8 @@ function MainApp() {
         {/* Only show Grid - it handles its own post-click state */}
         <Grid disabled={devMode ? false : hasAttemptedToday} />
 
-        {/* Countdown Timer - Only show if clicked and not in dev mode and not showing share card */}
-        {hasAttemptedToday && !devMode && !hasClicked && (
+        {/* Countdown Timer - Show if clicked and not in dev mode */}
+        {hasAttemptedToday && !devMode && (
           <div className="mt-8 mb-4">
             <div className="text-gray-400 text-xl mb-2">Next click in:</div>
             <div className="flex items-center justify-center text-white text-5xl font-mono">
