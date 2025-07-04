@@ -107,6 +107,9 @@ const Grid = ({ disabled = false }: GridProps) => {
     const displayWidth = gridSize.width;
     const displayHeight = gridSize.height;
     
+    // Don't draw anything if gridSize is not set yet
+    if (displayWidth === 0 || displayHeight === 0) return;
+    
     // Clear canvas
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, displayWidth, displayHeight);
